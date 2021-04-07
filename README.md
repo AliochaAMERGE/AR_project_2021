@@ -1,5 +1,6 @@
 # AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
+Nous supposerons l'envoie de message FIFO
 
 ### define
 

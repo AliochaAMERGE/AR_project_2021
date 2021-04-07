@@ -9,8 +9,8 @@
 
 /*LES TAGS */
 #define TAG_INIT 0
-//... d'autres TAG maybe
-#define TAG_TERMINAISON 1
+#define TAG_RECH 1
+#define TAG_TERM 2
 
 /* les variables globales */
 MPI_Status status;
@@ -36,7 +36,7 @@ int app(int k, int a, int b)
 
 // p : rank
 // id_already_used : contient les idChord pour les p-1 ranks, p : rank
-int f(int** id_already_used, int p)
+int f(int* id_already_used, int p)
 {
   srand(time(NULL));
   int alea_chord;
@@ -80,76 +80,101 @@ int compare(const void* a, const void* b)
     return 1;
 }
 
+int cycle_comparator(int a, int b)
+{
+  // ne pas utiliser avec qsort,
+  // -> undefined behavior, may infinite loop
+  if (a == b)
+    return 0;
+  else if (abs(b - a) < (pow(2, M)) / 2)
+    return 1;
+  else
+    return -1;
+}
+
+cycle_comparator(a, b);
+
 // qsort( array, element_count, element_size, *compare_function )
 
 /*************Initialisation de la DHT par le processus simulateur*************/
 
 void simulateur(void)
 {
-  int i;
-  /***************************************************************************
-   * A noté : L'indice de ces tableaux représente le rank des processus      *
-   * la premiere case de ces derniers contiendra -1 pour le rank 0 car c'est *
-   * lui qui est le processus simulateur                                     *
-   ***************************************************************************/
-  
-  // contient un ensemble de ID_CHORD
-  int id_chord[N - 1];
-  // contient des ensemble de M fingers pour chaque site
-  // un finger est composé de son ID_CHORD et de son MPI_RANK
-  int fingers[N - 1][M][2];
+  /*initialisation des variables*/
+  int id_chord[NB_PROC];  // tableau des identifiants CHORD
+  //  int fingers[M][2]; //tableau des M fingers
+  // int succ;
 
-  /*initialisation des identifiants CHORD, soit le tableau id_chord puis tri */
+  /*Identifiants chord*/
 
-  for (size_t p = 0; p < N - 1; p++)
+  /*Attribution des identifiants CHORD à chaque processus*/
+  /*Sauf le processus 0 qui correspond au simulateur*/
+  id_chord[0] = -1;
+  for (int p = 1; p < NB_PROC; p++)
   {
-    f(*id_chord, p);
+    f(&id_chord, p);
   }
-  qsort(*id_chord, N - 1, sizeof(int), compare);
+  /*Trie dans l'ordre croissant les id_chord pour former l'anneau*/
+  qsort(id_chord, NB_PROC - 1, sizeof(int), compare);
 
-  /*initialisation des fingers, soit le tableau fingers*/
-
-  for (size_t p = 0; p < N - 1; p++)
+  /*Envoi des identifiants chord au pairs du système*/
+  for (int p = 1; p < NB_PROC; p++)
   {
-    /* initialisation du successeur du site p */
-    fingers[p][0][0] = p+1; // ! faux
-    fingers[p][0][1] = id_chord[(p + 1) % N]; // ! faux
+    MPI_Send(id_chord[p], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+  }
 
-    // chaque process se voit assigner M fingers (f0 = succ)
-    // tel que les fingers sont compris entre succ et process p + M/2 (moitié du
-    // tableau)
-    for (size_t f = 1; f < M; f++)
+  /* ***************************************************
+   * Initialisation des fingers pour chaque processus  *
+   *************************************************** */
+
+  /* ****************************************************
+   * envoie successif des informations à la création de *
+   * chaque ensemble de finger                          *
+   **************************************************** */
+  // pour chaque pair du systeme
+  for (int p = 1; p < NB_PROC; p++)
+  {
+    /* ***************************************************
+     * tableau des M fingers                             *
+     ************************************************** */
+    int fingers[M][2];
+    /* ***************************************************
+     *  finger[0] = successeur, temp_rank                *
+     *  est le rank mpi du successeur                    *
+     *************************************************** */
+
+    int idChord = id_chord[p];
+    int rank;
+
+    for (int j = 0; j < M; j++)  // pour chaque finger du pair p
     {
-      // TODO check if it works
-      // ! vraiment pas sur
-      int fing = ((p + 1) + rand() % ((p + 1) + N - 1 / 2)) % N - 1;
-      // renvoie un entier aléatoire entre p+1 et p + N/2 (en respectant l'ordre cyclique)
-      fingers[p][f][0] = id_chord[fing];
-     
-    }
-  }
+      /* ***************************************************
+       *                clé                                *
+       *************************************************** */
+      int cle = (idChord + pow(2, j)) % pow(2, M);
+      for (int i = 1; i < NB_PROC; i++)
+      {
+        if (id_chord[i] >= cle)
+        {
+          /* ***************************************************
+           *                MPI Rank                           *
+           *************************************************** */
+          fingers[j][0] = rank;
+          /* ***************************************************
+           *                ID_CHORD                           *
+           *************************************************** */
+          fingers[j][1] = id_chord[rank];  // le responsable de la cle
+          break;
+        }
+      }  // fin recherche pair associé au finger
 
-  /* envoie des messages aux processus avec leurs id_chord et fingers */
+    }  // fin for each finger du pair p
 
-  // NE PAS OUBLIER DE METTRE LES PAIRS DANS L'ORDRE CROISANT ==>> ANNEAU !!!!
-  // ~fait EN FONCTION DES ID CHORD ET NON PAS RANK ~fait
+    // Envoie du tableau fingers au processus p
+    MPI_Send(&fingers, M * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
 
-  /*envoi à chacun des pairs du système leurs variables*/
+  }  // fin for each processus
 
-  for (size_t p = 0; p < N - 1; p++)
-  {
-    // envoie l'ID_CHORD à chaque processus (avec son MPI_rank mais pas
-    // forcément utile)
-    MPI_Send(&id_chord[p], 2, MPI_INT, (p + 1), TAG_INIT, MPI_COMM_WORLD);
-    // envoie les fingers
-    MPI_Send(&id_chord[p], 2, MPI_INT, (p + 1), TAG_INIT, MPI_COMM_WORLD);
-  }
-
-  /*
-  ! N site
-    ? ils ont chacun M finger
-      * chaque finger est composé de ID chord et rank
-  */
   /*------------------Fin de l'initialisation du système------------------*/
 
   /* QUESTION 3 : le simulateur
@@ -159,28 +184,36 @@ void simulateur(void)
    *  Attente de la réponse de la pair le responsable de cette donnée
    *  Progration du message de terminaison à tous les processus
    **/
-}
-/*
-p4 recoit de P0
-{-1, id1, id2, id3, -1, -1, id6, id7, -1}
-id1, id2, id3, id6, id7 <- pas ça
-id4
 
-CHORD => contient tous les couples (rank, id) de chaque pair de anneau ou id
-correspond à l'id du pair
+  /*Tire aleatoirement un id pair existant*/
+  srand(time(NULL));
+  int alea_pair = 1 + rand() % (NB_PROC + 1);
+  /*Tirage aleatoire d'une clé de donnée*/
+  int alea_donnee = rand() % pow(2, M);
 
-fingers contient des sous tableaux de finger pour chaque pair
+  /*Envoie d'un message à ce pair pour chercher le responsable de cette donnée
+   */
+  MPI_Send(alea_donnee, 1, MPI_INT, TAG_RECH, alea_pair, MPI_COMM_WORLD);
 
-pour l'envoi des fingers il faudra créer un tableau chord_tmp dans lequel on
-mettre SEULEMENT les couples correspond au id_chord des pairs qui sont dans le
-sous tableau de finger du proc i et donc chaque proc i aura l'information
-seulement des ses finger pair id et son rang mpi
+  /*Attente de la réponse de la pair le responsable de cette donnée*/
+  int responsable;
+  MPI_Recv(&responsable, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG,
+           MPI_COMM_WORLD, &status);
+  printf("Le responsable de la donnée %d est (<P%d>, <Pair_%d>)\n", alea_donnee,
+         status.MPI_SOURCE, responsable);
 
-p34, p44, p55
+  /*Progration du message de terminaison à tous les processus*/
+  for (int p = 1; p < NB_PROC; p++)
+  {
+    // le contenu du message n'a pas d'importance, on ne recupere pas de valeurs
+    // lors de la terminaison (pour le moment)
+    MPI_Send(&p, 1, MPI_INT, p, TAG_TERM, MPI_COMM_WORLD);
+  }
 
-*/
+  printf("Fin du simulateur\n");
+}  // fin simulateur
 
-/*-----------------------Fin de la fonction simulateur------------------------*/
+/*---------------------- Fin de la fonction simulateur -----------------------*/
 
 /*************************************MAIN*************************************/
 

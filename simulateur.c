@@ -39,68 +39,101 @@ void simulateur(void)
   {
     f(&id_chord, p);
   }
-  /*Mettre dans l'ordre croissant les id_chord*/
+  /*Trie dans l'ordre croissant les id_chord pour former l'anneau*/
   qsort(id_chord, NB_PROC - 1, sizeof(int), compare);
 
-  /*Initialisation des fingers pour chaque processus*/
-  // envoie successif des informations à la création de
-  // chaque ensemble de finger
+  /*Envoi des identifiants chord au pairs du système*/
   for (int p = 1; p < NB_PROC; p++)
   {
-    int fingers[M][2];  // tableau des M fingers
+    MPI_Send(id_chord[p], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+  }
 
-    // finger[0] = successeur, temp_rank est le rank mpi du successeur
-    int temp_rank = (p + 1) % NB_PROC;
-    temp_rank = temp_rank > 0 ? temp_rank : temp_rank + 1;
-    fingers[0][0] = temp_rank;            // mpi rank
-    fingers[0][1] = id_chord[temp_rank];  // id chord
+  /* ***************************************************
+   * Initialisation des fingers pour chaque processus  *
+   *************************************************** */
 
-    for (int f = 1; f < M; f++)
+  /* ****************************************************
+   * envoie successif des informations à la création de *
+   * chaque ensemble de finger                          *
+   **************************************************** */
+  // pour chaque pair du systeme
+  for (int p = 1; p < NB_PROC; p++)
+  {
+    /* ***************************************************
+     * tableau des M fingers                             *
+     ************************************************** */
+    int fingers[M][2];
+    /* ***************************************************
+     *  finger[0] = successeur, temp_rank                *
+     *  est le rank mpi du successeur                    *
+     *************************************************** */
+
+    int idChord = id_chord[p];
+    int rank;
+
+    for (int j = 0; j < M; j++)  // pour chaque finger du pair p
     {
-      // en defini M-1 finger, répartis entre p+1 et (p+(N/2)) % N (au plus la
-      // moitié des voisins)
-
-      // tirer la plage de valeurs des fingers :
-
-      // soit p le site courant, nous voulons tirer une valeurs entre p et
-      // p+(N/2) en respectant l'ordre cyclique
-      int fmax = f + (NB_PROC / 2);
-      // nous prenons la valeurs de p, et de p+(N/2) appelons les n et nmax
-      int n = id_chord[f];
-      int nmax = id_chord[fmax];
-
-      // tirons une valeurs aléatoire dans [n, nmax[ appelons la nrand
-      int nrand = n + rand() % (nmax - n + 1);
-
-      // vérifions quel site s'occupe de nrand (avec app() par exemple) appelons
-      // le f -> on recupere son MPI_RANK & id_chord
-      int fing;
-      for (int p = 0; p < NB_PROC - 1; p++)
+      /* ***************************************************
+       *                clé                                *
+       *************************************************** */
+      int cle = (idChord + pow(2, j)) % pow(2, M);
+      for (int i = 1; i < NB_PROC; i++)
       {
-        if (id_chord[p] > nrand && id_chord[p] < nrand)
+        if (id_chord[i] >= cle)
         {
-          fing = p;
+          /* ***************************************************
+           *                MPI Rank                           *
+           *************************************************** */
+          fingers[j][0] = rank;
+          /* ***************************************************
+           *                ID_CHORD                           *
+           *************************************************** */
+          fingers[j][1] = id_chord[rank];  // le responsable de la cle
           break;
         }
-      }
-      // ajoutons f dans notre liste de finger, ajoutons son MPI_rank
-      fingers[f][0] = fing;
-      fingers[f][1] = id_chord[fing];
-      // on a ajouté un finger aléatoire, on repete ça M fois, et on voit si on les tri ou pas
-    }
-    // MPI_Send();
+      }  // fin recherche pair associé au finger
+
+    }  // fin for each finger du pair p
+
+    // Envoie du tableau fingers au processus p
+    MPI_Send(&fingers, M * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+
+  }  // fin for each processus
+
+  /*------------------Fin de l'initialisation du système------------------*/
+
+  /* QUESTION 3 : le simulateur
+   *  tire aleatoirement un id pair (verifier son existence)
+   *                     une clé de donnée
+   *  envoi d'un message à ce pair pour chercher le responsable de cette donnée
+   *  Attente de la réponse de la pair le responsable de cette donnée
+   *  Progration du message de terminaison à tous les processus
+   **/
+
+  /*Tire aleatoirement un id pair existant*/
+  srand(time(NULL));
+  int alea_pair = 1 + rand() % (NB_PROC + 1);
+  /*Tirage aleatoire d'une clé de donnée*/
+  int alea_donnee = rand() % pow(2, M);
+
+  /*Envoie d'un message à ce pair pour chercher le responsable de cette donnée
+   */
+  MPI_Send(alea_donnee, 1, MPI_INT, TAG_RECH, alea_pair, MPI_COMM_WORLD);
+
+  /*Attente de la réponse de la pair le responsable de cette donnée*/
+  int responsable;
+  MPI_Recv(&responsable, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG,
+           MPI_COMM_WORLD, &status);
+  printf("Le responsable de la donnée %d est (<P%d>, <Pair_%d>)\n", alea_donnee,
+         status.MPI_SOURCE, responsable);
+
+  /*Progration du message de terminaison à tous les processus*/
+  for (int p = 1; p < NB_PROC; p++)
+  {
+    // le contenu du message n'a pas d'importance, on ne recupere pas de valeurs
+    // lors de la terminaison (pour le moment)
+    MPI_Send(&p, 1, MPI_INT, p, TAG_TERM, MPI_COMM_WORLD);
   }
-}
-/*
-tu es sur le site N
-    : d id p tu veux son successeur(MPI_rank) tu
-      fais(p + 1 % N) si id du finger < p alors tu fais + 1 quand tu l ajoutes
-                                            N site
 
-                                            p =
-    N tu veux successeur tu fais(p + 1) % N->ça te donne 0 0 <
-    p->+ 1 et tu obtiens successeur = 1
-
-    c est pas beau mais ça résoud le probleme oui,
-                                            il y a une autre solution
-*/
+  printf("Fin du simulateur\n");
+}  // fin simulateur
