@@ -1,33 +1,22 @@
-## TODO 
-
-Exercice 1 : un precessus simulateur initialisera la DHT CHORD **de manière centralisée** : il calculera l’ensemble des finger tables après avoir tiré aléatoirement les identifiants des pairs.
-
-Nous devons initialiser le graphe par un processus initiateur, qui définira les identifiants CHORD, et attribuera les fingers.
+# AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
 
-- Generateur de graph : 
-Soit un N et un M donné en parametre 
-genere N site, chaque site se voit attribué une valeur comprise entre [0, M-1]
-chaque site se voit attribué son successeur (rank + 1) et M fingers
+### define
 
-- Fonctions de hash : 
-f : Pi -> I
-g : D -> K
+- On a NB_PROC proc : contenant les N pairs, +1 processus inititateur
 
-avec Pi l'ensemble des pairs du système
-I l'ensemble des identifiants (valeurs de Hash données à un site)
+- N : le nombre de pair soit NB_PROC - 1
 
-D l'ensemble des données
-K l'ensemble des identifiants des données (clés)
+- M : la plage de valeurs (allant de 0 à (2^M)-1)
 
-- Ecrire la fonction booléenne app(k, a, b) qui vérifie que k ∈ [a, b[ :
-```
-#define app(k,a,b) ((a)<(b))?((k)>=(a) && (k)<(b)) : \
-((((k)>=0) && ((k)<(b))) || (((k)>=(a)) && ((k)<N)))
-```
 
-- Toujours respecté la relation d'ordre cyclique :
 
-a <= b ssi 0 <= abs(b-a) <= int(K/2)
+### Variables dans le processus initiateur :
 
+- id_chord : le tableau d'id_chord de chaque processus.
+    - > Nous enverrons à chaque processus son id_chord
+
+- fingers : tableau à trois dimensions contenant 
+     - > Pour chaque pairs : la liste de ses fingers (avec finger[0] son successeur)
+       - > Pour chaque finger : son id_chord et son rank MPI
 

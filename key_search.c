@@ -12,6 +12,9 @@
 //... d'autres TAG maybe
 #define TAG_TERMINAISON 1
 
+/* les variables globales */
+MPI_Status status;
+
 /**********************Fonction d'appartenance à [a,b[************************/
 /******************************************************************************
  *               app vérifie si la clé k appartient à                         *
@@ -60,10 +63,10 @@ int f(int** id_already_used, int p)
  *            g retourne aléatoirement un identifiant unique pour une donnée  *
  *            (clés) parmis l'ensemble des données du système                 *
  ******************************************************************************/
-void g(void) {}
 
-/* trier un tableau */
+int g(int value) { return value % (pow(2, M) - 1); }
 
+/******************************Fonctions pour trier****************************/
 int compare(const void* a, const void* b)
 {
   int int_a = *((int*)a);
@@ -89,32 +92,28 @@ void simulateur(void)
    * la premiere case de ces derniers contiendra -1 pour le rank 0 car c'est *
    * lui qui est le processus simulateur                                     *
    ***************************************************************************/
-  int CHORD[N - 1][2];    // contient un ensemble de couple (MPI rank, id chord)
-  int fingers[N - 1][M];  // contient des ensemble de M fingers pour chaque site
-  int succ[N - 1];        // contient l'identifiant CHORD du successeur succ[i]
+  
+  // contient un ensemble de ID_CHORD
+  int id_chord[N - 1];
+  // contient des ensemble de M fingers pour chaque site
+  // un finger est composé de son ID_CHORD et de son MPI_RANK
+  int fingers[N - 1][M][2];
 
-  /*initialisation des identifiants CHORD, soit le tableau CHORD */
-
-  int* id_already_used;
-
-  for (size_t p = 0; p < N - 1; p++)
-  {
-    f(*id_already_used, p);
-  }
-  qsort(*id_already_used, N - 1, sizeof(int), compare);
+  /*initialisation des identifiants CHORD, soit le tableau id_chord puis tri */
 
   for (size_t p = 0; p < N - 1; p++)
   {
-    CHORD[p][0] = p + 1;               // MPI_Rank
-    CHORD[p][1] = id_already_used[p];  // ID_Chord
+    f(*id_chord, p);
   }
+  qsort(*id_chord, N - 1, sizeof(int), compare);
 
   /*initialisation des fingers, soit le tableau fingers*/
 
   for (size_t p = 0; p < N - 1; p++)
   {
     /* initialisation du successeur du site p */
-    fingers[p][0] = id_already_used[(p + 1) % N];
+    fingers[p][0][0] = p+1;
+    fingers[p][0][1] = id_chord[(p + 1) % N];
 
     // chaque process se voit assigner M fingers (f0 = succ)
     // tel que les fingers sont compris entre succ et process p + M/2 (moitié du
@@ -122,19 +121,34 @@ void simulateur(void)
     for (size_t f = 1; f < M; f++)
     {
       // TODO check if it works
-      int fing =
-          ((p + 1) + rand() % ((p + 1) + N / 2)) % N;  // ! vraiment pas sur
-      fingers[p][f] = id_already_used[fing];
+      // ! vraiment pas sur
+      int fing = ((p + 1) + rand() % ((p + 1) + N - 1 / 2)) % N - 1;
+      fingers[p][f][0] = id_chord[fing];
+     
     }
   }
 
-  // NE PAS OUBLIER DE METTRE LES PAIRS DANS L'ORDRE CROISANT ==>> ANNEAU !!!!  ~fait
-  // EN FONCTION DES ID CHORD ET NON PAS RANK                                   ~fait
+  /* envoie des messages aux processus avec leurs id_chord et fingers */
+
+  // NE PAS OUBLIER DE METTRE LES PAIRS DANS L'ORDRE CROISANT ==>> ANNEAU !!!!
+  // ~fait EN FONCTION DES ID CHORD ET NON PAS RANK ~fait
 
   /*envoi à chacun des pairs du système leurs variables*/
-  //===>>>> MPI_Send à faire
-  // tag à créer ???? a voir
 
+  for (size_t p = 0; p < N - 1; p++)
+  {
+    // envoie l'ID_CHORD à chaque processus (avec son MPI_rank mais pas
+    // forcément utile)
+    MPI_Send(&id_chord[p], 2, MPI_INT, (p + 1), TAG_INIT, MPI_COMM_WORLD);
+    // envoie les fingers
+    MPI_Send(&id_chord[p], 2, MPI_INT, (p + 1), TAG_INIT, MPI_COMM_WORLD);
+  }
+
+  /*
+  ! N site
+    ? ils ont chacun M finger
+      * chaque finger est composé de ID chord et rank
+  */
   /*------------------Fin de l'initialisation du système------------------*/
 
   /* QUESTION 3 : le simulateur
