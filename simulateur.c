@@ -52,29 +52,41 @@ void simulateur(void)
     // finger[0] = successeur, temp_rank est le rank mpi du successeur
     int temp_rank = (p + 1) % NB_PROC;
     temp_rank = temp_rank > 0 ? temp_rank : temp_rank + 1;
-    fingers[0][0] = temp_rank; //mpi rank
-    fingers[0][1] = id_chord[temp_rank]; // id chord
+    fingers[0][0] = temp_rank;            // mpi rank
+    fingers[0][1] = id_chord[temp_rank];  // id chord
 
     for (int f = 1; f < M; f++)
     {
       // en defini M-1 finger, répartis entre p+1 et (p+(N/2)) % N (au plus la
       // moitié des voisins)
 
-      fmax = f+(NB_PROC/2);
-
       // tirer la plage de valeurs des fingers :
-      // soit p le site courant, nous voulons tirer une valeurs entre p et p+(N/2) en respectant l'ordre cyclique
+
+      // soit p le site courant, nous voulons tirer une valeurs entre p et
+      // p+(N/2) en respectant l'ordre cyclique
+      int fmax = f + (NB_PROC / 2);
       // nous prenons la valeurs de p, et de p+(N/2) appelons les n et nmax
+      int n = id_chord[f];
+      int nmax = id_chord[fmax];
+
       // tirons une valeurs aléatoire dans [n, nmax[ appelons la nrand
-      // vérifions quel site s'occupe de nrand (avec app() par exemple) appelons le f -> on recupere son MPI_RANK & id_chord
+      int nrand = n + rand() % (nmax - n + 1);
+
+      // vérifions quel site s'occupe de nrand (avec app() par exemple) appelons
+      // le f -> on recupere son MPI_RANK & id_chord
+      int fing;
+      for (int p = 0; p < NB_PROC - 1; p++)
+      {
+        if (id_chord[p] > nrand && id_chord[p] < nrand)
+        {
+          fing = p;
+          break;
+        }
+      }
       // ajoutons f dans notre liste de finger, ajoutons son MPI_rank
-      // ? OK ?
-
-
-      int temp_id = 0;
-      fingers[0][0] = temp_id > 0 ? temp_id : temp_id + 1;
-
-      fingers[f][0] = 0;
+      fingers[f][0] = fing;
+      fingers[f][1] = id_chord[fing];
+      // on a ajouté un finger aléatoire, on repete ça M fois, et on voit si on les tri ou pas
     }
     // MPI_Send();
   }
