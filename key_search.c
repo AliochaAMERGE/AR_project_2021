@@ -112,8 +112,8 @@ void simulateur(void)
   for (size_t p = 0; p < N - 1; p++)
   {
     /* initialisation du successeur du site p */
-    fingers[p][0][0] = p+1;
-    fingers[p][0][1] = id_chord[(p + 1) % N];
+    fingers[p][0][0] = p+1; // ! faux
+    fingers[p][0][1] = id_chord[(p + 1) % N]; // ! faux
 
     // chaque process se voit assigner M fingers (f0 = succ)
     // tel que les fingers sont compris entre succ et process p + M/2 (moitié du
@@ -123,6 +123,7 @@ void simulateur(void)
       // TODO check if it works
       // ! vraiment pas sur
       int fing = ((p + 1) + rand() % ((p + 1) + N - 1 / 2)) % N - 1;
+      // renvoie un entier aléatoire entre p+1 et p + N/2 (en respectant l'ordre cyclique)
       fingers[p][f][0] = id_chord[fing];
      
     }
