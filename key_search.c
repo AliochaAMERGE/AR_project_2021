@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "header.h"
+
 #define NB_PROC 11
 #define N (NB_PROC - 1)
 // nombre de sites (processus) en comptant le processus initiateur
@@ -304,7 +306,7 @@ void receive() {
 
           // si initiateur est responsable de la clé
           if (message[0] == message[1]) {
-            MPI_Send(message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
+            MPI_Send(&message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
             // send(message, TAG_SUCC, 0);
           } else {
             next_pair = findnext(message[0]);
@@ -325,7 +327,7 @@ void receive() {
 
           // si initiateur est responsable de la clé
           if (message[0] == message[1]) {
-            MPI_Send(message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
+            MPI_Send(&message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
             // send(message, TAG_SUCC, 0);
           } else {
             next_pair = findnext(message[0]);
