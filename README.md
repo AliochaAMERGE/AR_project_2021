@@ -49,3 +49,9 @@ Reception du type message "lastchance"
 il a parler de initiator il a dit qu'on devrait pas envoyer à initiateur car pas obliger 
 qu'il soit dans la table de routage.... j'ai pas trop compris ce qu'il a expliquer ... 
 
+
+
+
+### compilation :
+
+ajouter `-lm -ldl` lors de la compilation
