@@ -2,6 +2,8 @@
 
 Nous supposerons l'envoie de message FIFO
 
+## Exercice 1 : Recherche d’une clé
+
 ### define
 
 - On a NB_PROC proc : contenant les N pairs, +1 processus inititateur
@@ -23,9 +25,17 @@ Nous supposerons l'envoie de message FIFO
          - fingers[0] : son MPI_rank
          - fingers[1] : son id_chord
 
+### variable globales propre à chaque processus
+
+Status status;          // MPI_status
+
+int rank;               // MPI_rank du site
+
+int id_chord;           // id_chord du site
+
+int fingers [M][2];     // table de routage du site
 
 ### lookup :
-
 
 lookup(k,initiator p) => prend en parametre la clé rechercher et l'initiateur de la requete
     => il faut qu'on memorise l'initiateur pour qu'on puisse le repondre à la fin
@@ -48,9 +58,6 @@ Reception du type message "lastchance"
 
 il a parler de initiator il a dit qu'on devrait pas envoyer à initiateur car pas obliger 
 qu'il soit dans la table de routage.... j'ai pas trop compris ce qu'il a expliquer ... 
-
-
-
 
 ### compilation :
 

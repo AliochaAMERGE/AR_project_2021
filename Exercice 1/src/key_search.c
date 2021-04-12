@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "header.h"
+#include "include/header.h"
 
 #define NB_PROC 11
 #define N (NB_PROC - 1)
