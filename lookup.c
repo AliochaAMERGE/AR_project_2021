@@ -8,9 +8,10 @@
 #define NIL -1
 
 /* les TAGS */
-#define LAST_CHANCE 1
-#define LOOKUP 2
-#define SUCC 3
+#define TAG_INIT_LOOKUP 0
+#define TAG_LAST_CHANCE 1
+#define TAG_LOOKUP 2
+#define TAG_SUCC 3
 #define TAG_TERM 4
 
 MPI_Status status;
@@ -138,9 +139,9 @@ int lookup(int initateur_chord, int k) {
   int next = findnext(k);
 
   if (next == NIL) {
-    send(message, LAST_CHANCE, fingers[0][0]);
+    send(message, TAG_LAST_CHANCE, fingers[0][0]);
   } else {
-    send(message, LOOKUP, next);
+    send(message, TAG_LOOKUP, next);
   }
 }
 
