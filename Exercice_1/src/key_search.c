@@ -145,30 +145,28 @@ void simulateur(void) {
      *************************************************** */
 
     int idChord = id_chord[p];
-    int rank;
 
-    for (int j = 0; j < M; j++)  // pour chaque finger du pair p
-    {
-      /* ***************************************************
-       *                clé                                *
-       *************************************************** */
+    // pour chaque finger du pair p
+    for (int j = 0; j < M; j++) {
+      /* clé */
       int cle = (idChord + (int)pow(2, j)) % ((int)pow(2, M));
       for (int i = 1; i < NB_PROC; i++) {
         if (id_chord[i] >= cle) {
           /* ***************************************************
            *                MPI Rank                           *
            *************************************************** */
-          fingers[j][0] = rank;
+          fingers[j][0] = i;
           /* ***************************************************
            *                ID_CHORD                           *
            *************************************************** */
-          fingers[j][1] = id_chord[rank];  // le responsable de la cle
+          // le responsable de la cle
+          fingers[j][1] = id_chord[i];
           break;
         }
       }  // fin recherche pair associé au finger
 
     }  // fin for each finger du pair p
-
+    
     // Envoie du tableau fingers au processus p
     MPI_Send(&fingers, M * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
 
@@ -220,7 +218,7 @@ void recherche(int pair, int key) {
  *               lookup gère la suite de la recherche                         *
  *****************************************************************************/
 
-int lookup(int initateur_chord, int k) {
+void lookup(int initateur_chord, int k) {
   int message[2] = {initateur_chord, k};
   // MPI_rank du plus grand finger ne dépassant pas k
   int next = findnext(k);
@@ -232,9 +230,9 @@ int lookup(int initateur_chord, int k) {
   }
 }
 
-int initiate_lookup(int k) {
+void initiate_lookup(int k) {
   int initiateur_chord = id_chord;
-  return lookup(initiateur_chord, k);
+  lookup(initiateur_chord, k);
 }
 
 /* ****************************************************************************
@@ -274,7 +272,7 @@ void send(int* message, int tag, int dest) {
  *****************************************************************************/
 
 void receive() {
-  int* message;
+  int message[2];
   int next_pair;
 
   while (1) {
@@ -290,7 +288,7 @@ void receive() {
         if (have_data(message[1], C)) {  // si je suis responsable de la clé
           // -> on cherche a renvoyé un tag SUCC à l'initiateur
           /*Enregistre l'id_chord de l'initiateur*/
-          int initiateur = message[0];
+          // ? int initiateur = message[0];
           /* mise à jour du contenu du message */
           /* message[0] on laisse l'initiateur
            * le message contenait la clé que nous recherchions,
@@ -377,14 +375,14 @@ int main(int argc, char* argv[]) {
   int nb_proc, rang;
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
-
+  printf("dans le main\n");
   if (nb_proc != N + 1) {
     printf("Nombre de processus incorrect !\n");
     MPI_Finalize();
     exit(2);
   }
-
   MPI_Comm_rank(MPI_COMM_WORLD, &rang);
+
 
   if (rang == 0) {
     simulateur();

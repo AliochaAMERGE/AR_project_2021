@@ -15,9 +15,9 @@ void init();
 
 void recherche(int pair, int key);
 
-int lookup(int initateur_chord, int k);
+void lookup(int initateur_chord, int k);
 
-int initiate_lookup(int k);
+void initiate_lookup(int k);
 
 int findnext(int k);
 
