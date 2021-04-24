@@ -141,15 +141,14 @@ void simulateur(void) {
     id_chord[p] = f(id_chord, p);
   }
 
+  qsort(id_chord, NB_PROC, sizeof(int), compare);
   for (int p = 0; p < NB_PROC; p++) {
     printf("[%d] = %d \t", p, id_chord[p]);
   }
   /*Trie dans l'ordre croissant les id_chord pour former l'anneau*/
-  qsort(id_chord, NB_PROC, sizeof(int), compare);
 
   /*Envoi des identifiants chord au pairs du système*/
   for (int p = 1; p < NB_PROC; p++) {
-    printf("[%d] = %d \n", p, id_chord[p]);
     MPI_Send(&id_chord[p], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
   }
 
