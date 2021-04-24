@@ -50,7 +50,7 @@ void receive();
 MPI_Status status;
 int rank;
 int id_chord;
-// [0] : id_chord ~ [1] : MPI_Rank
+// [0] : MPI_Rank ~ [1] : Id_chord
 int fingers[M][2];
 int* C;  // les données gérée par le site courant
 // c'est derniere ne sont pas gérée pour le moment
@@ -77,21 +77,22 @@ int app(int k, int a, int b) {
 int f(int* id_already_used, int p) {
   srand(time(NULL));
   int alea_chord;
-  // on a 2^M-1 valeurs possibles
-  int i = 0;
+  int used;
+  
   do {
+    used = 1;
     alea_chord = (rand() % ((int)pow(2, M)));  // retire une valeur aléatoire
-    if (id_already_used[i] == alea_chord) {
-      i = 0;  // repart du début
-    } else {
-      i++;
-    }
-  } while (i < p);
 
-  id_already_used[p] = alea_chord;
+    for (int i = 0; i < p; i++) {
+      if (id_already_used[i] == alea_chord) {
+        used = 0;
+      }
+    }
+  } while (!used);
 
   return alea_chord;
 }
+
 /* ***************************************************************************
  *            g retourne aléatoirement un identifiant unique pour une donnée  *
  *            (clés) parmis l'ensemble des données du système                 *
@@ -123,8 +124,6 @@ int cycle_comparator(int a, int b) {
     return -1;
 }
 
-// qsort( array, element_count, element_size, *compare_function )
-
 /*************Initialisation de la DHT par le processus simulateur*************/
 
 void simulateur(void) {
@@ -139,13 +138,18 @@ void simulateur(void) {
   /*Sauf le processus 0 qui correspond au simulateur*/
   id_chord[0] = -1;
   for (int p = 1; p < NB_PROC; p++) {
-    f(id_chord, p);
+    id_chord[p] = f(id_chord, p);
+  }
+
+  for (int p = 0; p < NB_PROC; p++) {
+    printf("[%d] = %d \t", p, id_chord[p]);
   }
   /*Trie dans l'ordre croissant les id_chord pour former l'anneau*/
-  qsort(id_chord, NB_PROC - 1, sizeof(int), compare);
+  qsort(id_chord, NB_PROC, sizeof(int), compare);
 
   /*Envoi des identifiants chord au pairs du système*/
   for (int p = 1; p < NB_PROC; p++) {
+    printf("[%d] = %d \n", p, id_chord[p]);
     MPI_Send(&id_chord[p], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
   }
 
@@ -188,10 +192,7 @@ void simulateur(void) {
     }  // fin for each finger du pair p
 
     // Envoie du tableau fingers au processus p
-    MPI_Send(
-        fingers, M * 2, MPI_INT, p, TAG_INIT,
-        MPI_COMM_WORLD);  //                         ? envoi fingers aux process
-                          //                         TAG_INIT taille M*2
+    MPI_Send(fingers, M * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
 
   }  // fin for each processus
 
@@ -200,11 +201,10 @@ void simulateur(void) {
   printf("Fin du simulateur\n");
 }  // fin simulateur
 
-// ! todo commenter
 void init() {
   MPI_Recv(&id_chord, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
   MPI_Recv(fingers, M * 2, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
-  printf("fin init\n");
+  // printf("fin init\n");
 }
 
 /*---------------------- Fin de la fonction simulateur -----------------------*/
@@ -214,10 +214,7 @@ void init() {
 void recherche(int pair, int key) {
   // Envoie d'un message à ce pair pour chercher le responsable de cette donnée
 
-  MPI_Send(&key, 1, MPI_INT, pair, TAG_INIT_LOOKUP,
-           MPI_COMM_WORLD);  //                            ? envoie un message
-                             //                            au pair indiqué
-                             //                            contenant la clé
+  MPI_Send(&key, 1, MPI_INT, pair, TAG_INIT_LOOKUP, MPI_COMM_WORLD);
 
   /* Attente de la réponse de la pair le responsable de cette donnée */
   int responsable;
@@ -254,22 +251,33 @@ void lookup(int initateur_chord, int k) {
 
   if (next == NIL) {
     printf("fin lookup TAG_LAST_CHANCE\n");
-
+    // on doit envoyer un message contenant ;
+    // * message[0] = id_chord initiateur
+    // * message[1] = id_chord responsable
     MPI_Send(message, 2, MPI_INT, fingers[0][0], TAG_LAST_CHANCE,
              MPI_COMM_WORLD);
+    printf(
+        "######################################################################"
+        "###### 253  Send [0] = %d [1] = %d\n\n",
+        message[0], message[1]);
 
     // send(message, TAG_LAST_CHANCE, fingers[0][0]);
   } else {
-    // send(message, TAG_LOOKUP, next);
+    // * message[0] = id_chord initiateur
+    // * message[1] = clé recherchée
     printf("fin lookup TAG_LOOKUP\n");
     MPI_Send(message, 2, MPI_INT, next, TAG_LOOKUP, MPI_COMM_WORLD);
+    printf(
+        "######################################################################"
+        "###### 262 Send [0] = %d [1] = %d\n\n",
+        message[0], message[1]);
   }
 }
 
 void initiate_lookup(int k) {
+  printf("init lookup %d \n", k);
   int initiateur_chord = id_chord;
   lookup(initiateur_chord, k);
-  printf("fin initiate_lookup\n");
 }
 
 /* ****************************************************************************
@@ -282,9 +290,14 @@ int findnext(int k) {
   // input : clés
   // output : MPI_rank
   for (int i = M - 1; i >= 0; i--) {
-    if (app(k, fingers[i][0], id_chord)) {
-      printf("fin findnext trouvé %d\n", i);
-      return fingers[i][1];
+    printf("%d € [%d %d[ ? %d\n", k, fingers[i][1], id_chord,
+           app(k, fingers[i][1], id_chord));
+
+    if (app(k, fingers[i][1], id_chord)) {
+      printf("fin findnext trouvé %d ~ %d ~ %d \n", i, fingers[i][0],
+             fingers[i][1]);
+
+      return fingers[i][0];
     }
   }
   printf("fin findnext NIL\n");
@@ -307,11 +320,13 @@ void receive() {
   while (1) {
     MPI_Recv(message, 2, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
              &status);
-    printf("receive\n");
+    printf("receive = = = =  %d\n", status.MPI_TAG);
+    printf("message = {%d,%d}\n", message[0], message[1]);
 
     switch (status.MPI_TAG) {
       case TAG_INIT_LOOKUP:
-        initiate_lookup(message[1]);
+        // initialement le message contient seulement la clé et rien d'autre
+        initiate_lookup(message[0]);
         break;
 
       case TAG_LAST_CHANCE:
@@ -333,12 +348,21 @@ void receive() {
           message[1] = id_chord;
 
           // si initiateur est responsable de la clé
-          if (message[0] == message[1]) {
-            MPI_Send(&message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
+          if (message[0] == id_chord) {
+            // message[1] = id_chord;
+            // MPI_Send(&message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
+            MPI_Send(&id_chord, 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
             // send(message, TAG_SUCC, 0);
           } else {
-            next_pair = findnext(message[0]);
+            // next_pair = findnext(message[0]);
+            // message[1] = id_chord;
+            next_pair = findnext(message[1]);
+
             MPI_Send(message, 2, MPI_INT, next_pair, TAG_SUCC, MPI_COMM_WORLD);
+            printf(
+                "##############################################################"
+                "##############352 Send [0] = %d [1] = %d\n\n",
+                message[0], message[1]);
           }
 
           /* Nous voulons renvoyer l'identité du responsable à l'initiateur
@@ -351,14 +375,15 @@ void receive() {
            * Le contenu du message est donc :
            *   message[0] = id_chord initiateur
            *   message[1] = NIL car la donnée n'est pas présente dans la DHT */
-          message[1] = NIL;
 
           // si initiateur est responsable de la clé
           if (message[0] == message[1]) {
+            message[1] = NIL;
             MPI_Send(&message[1], 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
             // send(message, TAG_SUCC, 0);
           } else {
-            next_pair = findnext(message[0]);
+            // next_pair = findnext(message[0]);
+            next_pair = findnext(message[1]);
             // send(message, TAG_SUCC, next_pair);
             MPI_Send(message, 2, MPI_INT, next_pair, TAG_SUCC, MPI_COMM_WORLD);
           }
@@ -374,11 +399,15 @@ void receive() {
         /*Responsable trouvé et on lance la recherche de
          *l'initiateur pour qu'il puisse signaler au simulateur */
 
+        // ici message = {id_chord de la personne en charge, id_chord}
+
+        printf("message : %d [] %d \n", message[0], message[1]);
+
         if (id_chord == message[0]) {  // si initiateur
           // notifie le simulateur la fin de la recherche et envoie l'id_chord
           // du responsable
           // send(message, TAG_SUCC, 0);
-          MPI_Send(message, 2, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
+          MPI_Send(&id_chord, 1, MPI_INT, 0, TAG_SUCC, MPI_COMM_WORLD);
           // le seul à pouvoir envoyé un message au simulateur
         } else {
           // il faut retrouver l'initiateur et lui envoyer le message <=> lookup
@@ -422,9 +451,12 @@ int main(int argc, char* argv[]) {
 
     /*Tire aleatoirement un id pair existant*/
     srand(time(NULL));
-    int alea_pair = 1 + rand() % (NB_PROC + 1);  // MPI_rank
+    int alea_pair = 1 + rand() % (NB_PROC);  // MPI_rank
     /*Tirage aleatoire d'une clé de donnée*/
-    int alea_key = rand() % ((int)pow(2, M));
+    int alea_key = 1 + rand() % ((int)pow(2, M) - 1);
+
+    printf("Recherche de : %d\n", alea_key);
+    printf("Initiateur : %d\n", alea_pair);
 
     recherche(alea_pair, alea_key);
     // envoie une recherche
