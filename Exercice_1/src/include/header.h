@@ -1,4 +1,5 @@
-// ! commenter
+// TODO : commenter
+
 int app(int k, int a, int b);
 
 int f(int* id_already_used, int p);
@@ -21,6 +22,5 @@ void initiate_lookup(int k);
 
 int findnext(int k);
 
-void send(int* message, int tag, int dest);
-
 void receive();
+

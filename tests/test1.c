@@ -165,6 +165,7 @@ void simulateur(void) {
   for (int p = 0; p < NB_PROC; p++) {
     printf("[%d] = %d \t", p, id_chord[p]);
   }
+  printf("\n");
   /*Trie dans l'ordre croissant les id_chord pour former l'anneau*/
   /*Envoi des identifiants chord au pairs du système*/
   for (int p = 1; p < NB_PROC; p++) {
@@ -191,11 +192,11 @@ void simulateur(void) {
      *************************************************** */
 
     int idChord = id_chord[p];
-
     // pour chaque finger du pair p
     for (int j = 0; j < M; j++) {
       /* clé */
       int cle = (idChord + (int)pow(2, j)) % ((int)pow(2, M));
+      int ok = 0;
       for (int i = 1; i < NB_PROC; i++) {
         if (id_chord[i] >= cle) {
           // * MPI RANK
@@ -203,11 +204,18 @@ void simulateur(void) {
           // * ID_CHORD
           // le responsable de la cle
           fingers[j][1] = id_chord[i];
+          ok = 1;
           break;
         }
       }  // fin recherche pair associé au finger
+      if (!ok) {
+        fingers[j][0] = 1;
+        fingers[j][1] = id_chord[1];
+      }
+      printf("[%d] = %d \t", p, fingers[j][1]);
 
     }  // fin for each finger du pair p
+    printf("\n");
 
     // Envoie du tableau fingers au processus p
     MPI_Send(fingers, M * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
@@ -340,17 +348,14 @@ void receive() {
              &status);
     switch (status.MPI_TAG) {
       case TAG_INIT_LOOKUP:
-        printf("Init lookup \n");
         // initialement le message contient seulement la clé et rien d'autre
         initiate_lookup(message[0]);
         break;
 
       case TAG_LAST_CHANCE:
-        printf("tag_last chance\n");
         if (have_data(message[1], C)) {  // si je suis responsable de la clé
           // -> on cherche a renvoyé un tag SUCC à l'initiateur
           /*Enregistre l'id_chord de l'initiateur*/
-          // ? int initiateur = message[0];
           /* mise à jour du contenu du message */
           /* message[0] on laisse l'initiateur
            * le message contenait la clé que nous recherchions,
@@ -416,12 +421,10 @@ void receive() {
 
       case TAG_LOOKUP:
         /*Continue de la recherche du responsable de la clé*/
-        printf("tag lookup \n");
         lookup(message[0], message[1]);
         break;
 
       case TAG_SUCC:
-        printf("tag succ\n");
         /*Responsable trouvé et on lance la recherche de
          *l'initiateur pour qu'il puisse signaler au simulateur */
 
@@ -477,7 +480,7 @@ int main(int argc, char* argv[]) {
     /*Tire aleatoirement un id pair existant*/
     int alea_pair = 1 + rand() % (N);  // MPI_rank
     /*Tirage aleatoire d'une clé de donnée*/
-    int alea_key = rand() % ((int)pow(2, M)-1);
+    int alea_key = rand() % ((int)pow(2, M) - 1);
 
     printf("Recherche de : %d\n", alea_key);
     printf("Initiateur : %d\n", alea_pair);
