@@ -8,8 +8,6 @@ int g(int value);
 
 int compare(const void* a, const void* b);
 
-int cycle_comparator(int a, int b);
-
 void simulateur(void);
 
 void init();
