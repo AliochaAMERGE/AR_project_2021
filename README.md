@@ -1,6 +1,6 @@
 # AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
-Nous supposerons l'envoie de message FIFO
+Nous supposerons l'envoie des messages FIFO et fiable.
 
 ## Exercice 1 : Recherche d’une clé
 
