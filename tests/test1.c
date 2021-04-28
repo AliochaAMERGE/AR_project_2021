@@ -475,9 +475,9 @@ int main(int argc, char* argv[]) {
     simulateur();
 
     /*Tire aleatoirement un id pair existant*/
-    int alea_pair = 1 + rand() % (NB_PROC);  // MPI_rank
+    int alea_pair = 1 + rand() % (N);  // MPI_rank
     /*Tirage aleatoire d'une clé de donnée*/
-    int alea_key = rand() % ((int)pow(2, M));
+    int alea_key = rand() % ((int)pow(2, M)-1);
 
     printf("Recherche de : %d\n", alea_key);
     printf("Initiateur : %d\n", alea_pair);
