@@ -48,3 +48,5 @@ ajouter `-lm -ldl` lors de la compilation
 Simulateur : Tire N id_chord, et les donnes à des processus pris aléatoirement.
 Défini un certains nombre d'initiateur.
 
+On se basera sur l'algorithme de Hirschberg & Sinclair.
+
