@@ -22,5 +22,6 @@ void initiate_lookup(int k);
 
 int findnext(int k);
 
-void receive();
+int find_initiateur(int initiateur);
 
+void receive();

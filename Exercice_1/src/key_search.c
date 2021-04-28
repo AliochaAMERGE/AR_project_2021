@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "./include/header.h"
+
 #define NB_PROC 11
 #define N (NB_PROC - 1)
 // nombre de sites (processus) en comptant le processus initiateur
@@ -187,7 +189,7 @@ void simulateur(void) {
         fingers[j][0] = 1;
         fingers[j][1] = id_chord[1];
       }
-      printf("[%d] = %d \t", p, fingers[j][1]);
+      printf("%d[%d] = %d \t", p, j, fingers[j][1]);
 
     }  // fin for each finger du pair p
     printf("\n");
