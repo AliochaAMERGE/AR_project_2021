@@ -50,3 +50,7 @@ Défini un certains nombre d'initiateur.
 
 On se basera sur l'algorithme de Hirschberg & Sinclair.
 
+Etape 1 : Algorithme d'election -> nous trouvons un leader qui sera en charge de collecter les id_chord et les transmettres
+Etape 2 : collecte des id_chord
+Etape 3 : transmission des id_chord aux autres noeuds
+Etape 4 : chacun des neouds calculs sa table de fingers et affiche le résultat
