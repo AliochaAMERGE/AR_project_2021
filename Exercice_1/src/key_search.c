@@ -415,8 +415,8 @@ int main(int argc, char* argv[]) {
   }
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  srand(time(NULL));
-
+  srand(getpid());
+  
   if (rank == 0) {
     simulateur();
 
