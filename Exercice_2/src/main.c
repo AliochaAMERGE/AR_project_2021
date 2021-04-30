@@ -65,9 +65,6 @@ void init(void) {
   right = ((rang + 1) > N) ? 1 : (rang + 1);
   initiateur = rand() % 2;  // todo a définir
 
-  printf("<%d> {%d}: <%d , >%d ~ %d\n", rang, id_chord, left, right,
-         initiateur);
-
   leader = id_chord;
 
   if (initiateur) {
@@ -89,10 +86,11 @@ void initier_etape(void) {
   int message[2] = {id_chord, (int)pow(2, k)};
   // envoie d'un message de type OUT au voisin de droit et gauche
   MPI_Send(message, 2, MPI_INT, right, TAG_OUT, MPI_COMM_WORLD);
+  printf("-\n");
   MPI_Send(message, 2, MPI_INT, left, TAG_OUT, MPI_COMM_WORLD);
+  printf("-\n");
   k++;
 }
-
 /*
  * step = pow(2, k) initialement au debut d une etape
  * step-- à chaque message
@@ -116,9 +114,11 @@ void receive(void) {
           // si le message n'est pas revenu à bon port
           if (status.MPI_SOURCE == right) {
             // on transmet le message au voisin gauche
+            printf("-\n");
             MPI_Send(message, 2, MPI_INT, left, TAG_IN, MPI_COMM_WORLD);
           } else {
             // resp droit
+            printf("-\n");
             MPI_Send(message, 2, MPI_INT, right, TAG_IN, MPI_COMM_WORLD);
           }
         } else {
@@ -143,9 +143,11 @@ void receive(void) {
               // s'il s'agit d'un message venant du voisin de droite
               // transmet le message de type OUT au voisin de gauche
               MPI_Send(message, 2, MPI_INT, left, TAG_OUT, MPI_COMM_WORLD);
+              printf("-\n");
             } else {
               // transmet de le message de type OUT au voisin de droit
               MPI_Send(message, 2, MPI_INT, right, TAG_OUT, MPI_COMM_WORLD);
+              printf("-\n");
             }
           } else {  // la distance est atteinte
             // le type de message change en IN et fait demi tour
@@ -153,45 +155,46 @@ void receive(void) {
               // s'il s'agit d'un message venant du voisin de droite
               // transmet le message de type IN au voisin de gauche
               MPI_Send(message, 2, MPI_INT, left, TAG_IN, MPI_COMM_WORLD);
+              printf("-\n");
             } else {
               // transmet de le message de type IN au voisin de droit
               MPI_Send(message, 2, MPI_INT, right, TAG_IN, MPI_COMM_WORLD);
+              printf("-\n");
             }
           }
         } else {
           nb_OUT++;
-          if ((message[0] == id_chord) &&
-              (nb_OUT == 2)) {  // si je suis initiateur
+          if ((message[0] == id_chord) && (nb_OUT == 2)) {
+            // si je suis initiateur
             // je passe à l'état ELU et je gagne l'élection YOUHOU :)
             state = ELU;
 
-            size = (int)pow(2, k) - message[1];
-
-            printf("%d : Je suis le LEADER", id_chord);
+            size = (int)pow(2, k - 1) - message[1] + 2;
 
             /* Le contenu du message est :
              * message[0] = id_chord (leader)
              * message[1] = size (size de l'anneau)
              */
+            message[0] = rang;
             message[1] = size;
             // je préviens
+            printf("-\n");
             MPI_Send(message, 2, MPI_INT, right, TAG_COLLECTE, MPI_COMM_WORLD);
 
             // Le tableau est ordonné en fonction de MPI_Rank
             id_chord_table = malloc(size * sizeof(int));
+            id_chord_table[0] = -1;  // simulateur
             // ajout de son id_chord dans le tableau à l'indice rang
             id_chord_table[rang] = id_chord;
             // envoi au voisin de droit le tableau pour qu'il puisse ajouter son
             // id_chord
+            printf("-\n");
             MPI_Send(id_chord_table, size, MPI_INT, right, TAG_COLLECTE,
                      MPI_COMM_WORLD);
-            // prévention est revenue
-            MPI_Recv(id_chord_table, 2, MPI_INT, left, TAG_COLLECTE,
-                     MPI_COMM_WORLD, &status);
-
             // attente du tableau rempli de tous les id_Chord
             MPI_Recv(id_chord_table, size, MPI_INT, left, TAG_COLLECTE,
                      MPI_COMM_WORLD, &status);
+            printf("-\n");
             // envoi du tableau rempli au voisin de droite
             MPI_Send(id_chord_table, size, MPI_INT, right, TAG_COLLECTE,
                      MPI_COMM_WORLD);
@@ -199,9 +202,9 @@ void receive(void) {
             // sa table de fingers
             MPI_Recv(id_chord_table, size, MPI_INT, left, TAG_COLLECTE,
                      MPI_COMM_WORLD, &status);
-
             // calcul de ma table de finger
             fingers_table();
+            return;
             // affichage de ma table de finger
           }
         }
@@ -209,27 +212,33 @@ void receive(void) {
         break;
 
       case TAG_COLLECTE:
-        printf("TAG_COLLECTE %d\n", id_chord);
         leader = message[0];
         size = message[1];
 
         id_chord_table = malloc(size * sizeof(int));
-        printf("MPI_Send  leader et size\n");
-        // envoie au voisin de droit le leader et la size de l'anneau
-        MPI_Send(message, 2, MPI_INT, right, TAG_COLLECTE, MPI_COMM_WORLD);
+        if (right != leader) {
+          // envoie au voisin de droit le leader et la size de l'anneau
+          printf("-\n");
+          MPI_Send(message, 2, MPI_INT, right, TAG_COLLECTE, MPI_COMM_WORLD);
+        }
         // attente de la reception du tableau idChord envoyer par le voisin de
         // gauche
         MPI_Recv(id_chord_table, size, MPI_INT, left, TAG_COLLECTE,
                  MPI_COMM_WORLD, &status);
         // ajout de son id_chord dans le tableau à l'indice rang
         id_chord_table[rang] = id_chord;
+
         // envoi le tableau modifié au voisin de droite
+        printf("-\n");
         MPI_Send(id_chord_table, size, MPI_INT, right, TAG_COLLECTE,
                  MPI_COMM_WORLD);
 
         // attente du tableau rempli d'id_chord
         MPI_Recv(id_chord_table, size, MPI_INT, left, TAG_COLLECTE,
                  MPI_COMM_WORLD, &status);
+        printf("-\n");
+        MPI_Send(id_chord_table, size, MPI_INT, right, TAG_COLLECTE,
+                 MPI_COMM_WORLD);
 
         fingers_table();
 
@@ -238,41 +247,52 @@ void receive(void) {
         break;
 
       default:
+        printf("Ne doit pas être dans le default \n");
         break;
     }
   }
 }
 
+int compare(const void *a, const void *b) {
+  int int_a = *((int *)a);
+  int int_b = *((int *)b);
+
+  if (int_a == int_b)
+    return 0;
+  else if (int_a < int_b)
+    return -1;
+  else
+    return 1;
+}
+
 void fingers_table(void) {
-  int fingers[M][2];
+  int fingers[M];
+  int tmp_id_chord[size];
+  int cle;
 
-  /* finger[0] = successeur,
-   * temp_rank est le rank MPI du successeur */
+  for (int i = 0; i < size; i++) {
+    tmp_id_chord[i] = id_chord_table[i];
+  }
+  qsort(tmp_id_chord, size, sizeof(int), compare);
 
-  printf("%2d > ", id_chord);
-
-  // pour chaque finger du pair p
   for (int j = 0; j < M; j++) {
-    /* clé */
-    int cle = (id_chord + (int)pow(2, j)) % ((int)pow(2, M));
-    int ok = 0;
-    for (int i = 1; i < NB_PROC; i++) {
-      if (id_chord_table[i] >= cle) {
-        // MPI RANK
-        fingers[j][0] = i;
-        // ID_CHORD
-        fingers[j][1] = id_chord_table[i];
-        ok = 1;
-        break;
-      }
-    }  // fin recherche pair associé au finger
-    if (!ok) {
-      fingers[j][0] = 1;
-      fingers[j][1] = id_chord_table[1];
-    }
-    printf("%5d", fingers[j][1]);
+    cle = (id_chord + (int)pow(2, j)) % ((int)pow(2, M));
 
-  }  // fin for each finger du pair p
+    for (int k = 1; k < size; k++) {
+      // ordre cyclique
+      if (k == size - 1) {
+        if (tmp_id_chord[k] >= cle) {
+          fingers[j] = tmp_id_chord[k];
+        } else {
+          fingers[j] = tmp_id_chord[1];
+        }
+      } else {
+        if (tmp_id_chord[k] >= cle) {
+          fingers[j] = tmp_id_chord[k];
+        }
+      }
+    }
+  }
 }
 
 int main(int argc, char *argv[]) {
