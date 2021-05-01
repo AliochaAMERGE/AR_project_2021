@@ -63,9 +63,27 @@ void simulateur(void) {
   // distibue les identifiants chord à chaque noeuds
   id_chord_table = malloc(sizeof(int) * NB_PROC);
   id_chord_table[0] = -1;
+  int initiateurs[N];
+  int bool = 0, temp;
+
+  do {
+    for (int p = 1; p < NB_PROC; p++) {
+      temp = rand() % 2;
+      initiateurs[p - 1] = temp;
+      if (temp == 1) {
+        bool = 1;
+      }
+    }
+  } while (!bool);  // permet d'eviter l'absence d'initiateur
+
   for (int p = 1; p < NB_PROC; p++) {
     id_chord_table[p] = f(id_chord_table, p);
     MPI_Send(&id_chord_table[p], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+    left = ((p - 1) == 0) ? N : (p - 1);
+    MPI_Send(&left, 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+    right = ((p + 1) > N) ? 1 : (p + 1);
+    MPI_Send(&right, 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+    MPI_Send(&initiateurs[p - 1], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
   }
 }
 
@@ -78,12 +96,9 @@ void simulateur(void) {
 
 void init(void) {
   MPI_Recv(&id_chord, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
-  left = ((rang - 1) == 0) ? N : (rang - 1);
-  right = ((rang + 1) > N) ? 1 : (rang + 1);
-  // ! faible risque d'avoir aucun initiateur
-  // si c'est le cas -> soft lock
-  initiateur = rand() % 2;
-
+  MPI_Recv(&left, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
+  MPI_Recv(&right, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
+  MPI_Recv(&initiateur, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
   if (initiateur) {
     initier_etape();
   }
@@ -307,6 +322,8 @@ void fingers_table(void) {
     }
   }
   /* affichage de la table de fingers */
+  usleep(rang * 1000);  // pour garder un affichage cohérent
+  usleep(rang * 1000);  // pour garder un affichage cohérent
   usleep(rang * 1000);  // pour garder un affichage cohérent
   printf("\n Fingers table de : %d\n", id_chord);
   for (int t = 0; t < M; t++) {
