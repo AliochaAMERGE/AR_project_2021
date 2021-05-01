@@ -54,3 +54,6 @@ Etape 1 : Algorithme d'election -> nous trouvons un leader qui sera en charge de
 Etape 2 : collecte des id_chord
 Etape 3 : transmission des id_chord aux autres noeuds
 Etape 4 : chacun des neouds calculs sa table de fingers et affiche le résultat
+
+Le choix des initiateurs laisse un risque (faible) de n’avoir aucun processus initiateur : dans ce cas, on interrompt l’exécution et on
+recommence...

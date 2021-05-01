@@ -86,7 +86,7 @@ int compare(const void* a, const void* b) {
     return 1;
 }
 
-/*************Initialisation de la DHT par le processus simulateur*************/
+/************ Initialisation de la DHT par le processus simulateur ************/
 
 void simulateur(void) {
   /* initialisation des variables */
@@ -416,7 +416,7 @@ int main(int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   srand(getpid());
-  
+
   if (rank == 0) {
     simulateur();
 
