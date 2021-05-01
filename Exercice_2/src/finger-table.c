@@ -230,7 +230,6 @@ void receive(void) {
             // calcul de ma table de finger
             fingers_table();
             return;
-            // affichage de ma table de finger
           }
         }
 
