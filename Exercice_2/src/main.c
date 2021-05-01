@@ -307,7 +307,8 @@ void fingers_table(void) {
     }
   }
   /* affichage de la table de fingers */
-  printf("Fingers table de : %d\n", id_chord);
+  usleep(rang * 1000);  // pour garder un affichage cohérent
+  printf("\n Fingers table de : %d\n", id_chord);
   for (int t = 0; t < M; t++) {
     printf(" %2d ", fingers[t]);
   }
