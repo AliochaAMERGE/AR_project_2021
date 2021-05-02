@@ -1,19 +1,27 @@
+<img align="right" height="80" width="200" src="/img/index.png">
+
 ## AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
-<img align="right" height="100" width="250" src="/img/index.png">
-
 Réalisé par :
-  - **Namrata MISTRY M1 SAR**    --     https://github.com/mnam9807
-  - **Aliocha AMERGÉ M1 SAR**    --     https://github.com/AliochaAMERGE
+
+- [**Namrata MISTRY M1 SAR**](https://github.com/mnam9807 "Namrata MISTRY")
+- [**Aliocha AMERGÉ M1 SAR**](https://github.com/AliochaAMERGE "Aliocha AMERGÉ")
 
 **©SU/LMD/MU4IN403**
 
 Lien du projet : https://github.com/AliochaAMERGE/AR_project_2021.git
 
-### TABLE OF CONTENTS
+Ce projet a été réalisé dans le cadre de l'UE AR (MU4IN403) du master 1 Informatique mention SAR de *Sorbonne Université*.
+
+This project was realized within the framework of the UE AR (MU4IN403) of the master 1 Informatique mention SAR of *Sorbonne Université*.
+The whole project has been made in french.
+
+<div style="page-break-after: always;"></div>
+
+## TABLE OF CONTENTS
 
 - [AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD](#ar-mu4in403----projet--implémentation-du-protocole-p2p-chord)
-  - [TABLE OF CONTENTS](#table-of-contents)
+- [TABLE OF CONTENTS](#table-of-contents)
 - [Introduction](#introduction)
   - [Constantes](#constantes)
   - [Méthodes utilitaires](#méthodes-utilitaires)
