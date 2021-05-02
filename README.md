@@ -68,7 +68,7 @@ Arborescence :
 │   └── src
 │       ├── include
 │       │   └── header.h
-│       └── xxxxxxx.c  //todo : definir
+│       └── insertion_pair.c
 ├── README.md
 └── runmpicc.sh
 
@@ -134,16 +134,16 @@ Fichier : *Exercice 2/src/finger_table.c*
 
 ### Introduction
 
-L’objectif de cet exercice est de réaliser l’initialisation de la DHT CHORD avec une complexité en messages sous-quadratique (soit inférieure à *|Π|*<sup>2</sup> ) de manière distribuée. C'est-à-dire, pour chaque pair, le calcul de sa finger table.
+&nbsp;&nbsp;&nbsp;&nbsp;L’objectif de cet exercice est de réaliser l’initialisation de la DHT CHORD avec une complexité en messages sous-quadratique (soit inférieure à *|Π|*<sup>2</sup> ) de manière distribuée. C'est-à-dire, pour chaque pair, le calcul de sa finger table.
 
-Initialement, les pairs sont organisés en anneau bidirectionnel ordonné en fonction du rang MPI et non pas en fonction des identifiants CHORD des pairs. Chaque pair connaît donc son voisin de droite et son voisin de gauche, et a la possibilité d’envoyer des messages uniquement à ses deux voisins.
+&nbsp;&nbsp;&nbsp;&nbsp;Initialement, les pairs sont organisés en anneau bidirectionnel ordonné en fonction du rang MPI et non pas en fonction des identifiants CHORD des pairs. Chaque pair connaît donc son voisin de droite et son voisin de gauche, et a la possibilité d’envoyer des messages uniquement à ses deux voisins.
 
-Le simulateur est encore présent dans cette partie, mais son impact est réduit, il se chargera de donner à tous les pairs leurs identifiants CHORD, les voisins gauche et droite, et leur indiquer s'ils sont initiateur ou non.
+&nbsp;&nbsp;&nbsp;&nbsp;Le simulateur est encore présent dans cette partie, mais son impact est réduit, il se chargera de donner à tous les pairs leurs identifiants CHORD, les voisins gauche et droite, et leur indiquer s'ils sont initiateur ou non.
 
 ### Algorithme
 
-Notre approche afin de résoudre ce problème est quelque peu naïve, nous essayons de reproduire le comportement du simulateur de l’exercice 1 en élisant un pair qui prendra ce rôle.
-Nous ne tirons pas totalement partis de la distribution de l’anneau, ni de sa bidirectionnalité dans la deuxième partie.
+&nbsp;&nbsp;&nbsp;&nbsp;Notre approche afin de résoudre ce problème est quelque peu naïve, nous essayons de reproduire le comportement du simulateur de l’exercice 1 en élisant un pair qui prendra ce rôle.
+&nbsp;&nbsp;&nbsp;&nbsp;Nous ne tirons pas totalement partis de la distribution de l’anneau, ni de sa bidirectionnalité dans la deuxième partie.
 
 L’algorithme se divise en quatre étapes :
 
@@ -216,28 +216,43 @@ La diffusion suit le même fonctionnement que la collecte. Le tableau précédem
 Tout d'abord, on crée un tableau temporaire qui sera ordonné en fonction des identifiants CHORD. Une fois le tableau ordonné, on procède au calcul des finger qui est de taille M. 
 
 Voici le pseudo-code pour le calcul des fingers :
+
+```
 Pour un processus d’identifiant CHORD id :
 
 Pour chaque finger j allant de 0 à M :
-    soit la clé = (id_chord + 2j)
+    soit la clé = (id_chord + 2**j)
     recherche du plus petit pair dont l’id CHORD est supérieur à la clé 
                                        (en respectant l’ordre cyclique)
-
+```
 
 ### Justification de la correction de notre algorithme
 
+La justification d’un algorithme se classent en deux catégories : la **sûreté** et la **vivacité**. 
+
+Le protocole *MPI* garantit les canaux d’envoie de message *FIFO* et *fiables*. Nous savons donc que les messages arriveront dans le bon ordre, et qu’aucun ne sera perdu en cours de route.
+
+#### Sûreté :
+
+&nbsp;&nbsp;&nbsp;&nbsp;Un processus pair est élu si il est initiateur **et** que son identifiant CHORD est plus grand que les autres pairs. Il est élu lorsque que le tag *TAG_OUT*, qu’il avait envoyé à une distance 2<sup>k</sup>, lui revient. L’unicité des identifiants CHORD garantit la propriété de sûreté et qu’**un** seul des pairs sera élu et deviendra le leader.
+&nbsp;&nbsp;&nbsp;&nbsp;Après avoir un leader, nous pouvons garantir que le tableau des identifiants CHORD sera bien construit avec tous les identifiants des pairs existant dans l’anneau car le tag TAG_COLLECTE lancé par le leader, dans le sens de l’aiguille d’une horloge (unidirectionnel), lui sera retourné par son prédécesseur.
+&nbsp;&nbsp;&nbsp;&nbsp;Une fois que le tag *TAG_COLLECTE* est revenu au leader, il relance un tour de message de manière unidirectionnel pour diffuser le tableau rempli de tous les identifiants CHORD. C’est ainsi que chacun des pairs de la DHT aura connaissance des identifiants des autres pairs et pourra donc établir le calcul des finger table.
+
+#### Vivacité :
+
+&nbsp;&nbsp;&nbsp;&nbsp;Au total, le leader lance deux messages de type *TAG_COLLECTE*. Le premier tag lancé consiste à collecter les identifiants CHORD et le deuxième permet de faire la diffusion du tableau rempli et aussi de lancer la terminaison de l’algorithme. On peut garantir la terminaison de l’algorithme car à la réception du deuxième tag, chaque processus pair peut procéder au calcul des finger table et de l’afficher. 
 
 
 
 ### Complexité en nombre de messages
 
-La complexité de l’algorithme se base en nombre de messages envoyés. Supposons **N** le nombre de pairs dans la DHT. Chacun des pairs envoie 2 messages (voisins de droite et gauche) qui parcourent chacun une distance de 2<sup>k</sup>( avec **k** le nombre d’étapes).
+&nbsp;&nbsp;&nbsp;&nbsp;La complexité de l’algorithme se base en nombre de messages envoyés. Supposons **N** le nombre de pairs dans la DHT. Chacun des pairs envoie 2 messages (voisins de droite et gauche) qui parcourent chacun une distance de 2<sup>k</sup>( avec **k** le nombre d’étapes).
 
-Pour l’algorithme de l’élection du leader, on a une complexité en nombre de messages inférieur ou égale à **N*K**, soit une complexité en O(N.log<sub>2</sub>N). Le log<sub>2</sub>N correspond au nombre d’étapes. 
+&nbsp;&nbsp;&nbsp;&nbsp;Pour l’algorithme de l’élection du leader, on a une complexité en nombre de messages inférieur ou égale à **N*K**, soit une complexité en O(N.log<sub>2</sub>N). Le log<sub>2</sub>N correspond au nombre d’étapes. 
 
-Ensuite lorsque le leader est élu, il lance la collecte des identifiants CHORD en partant par le voisin de droite et fait donc un tour complet dans une seule direction. On aura donc une complexité en *O(N)*. Et après avoir tout collecter, le leader diffuse le tableau remplit des identifiants CHORD en partant du même principe pour la collection. La diffusion se fait donc avec une complexité en *O(N)*.
+&nbsp;&nbsp;&nbsp;&nbsp;Ensuite lorsque le leader est élu, il lance la collecte des identifiants CHORD en partant par le voisin de droite et fait donc un tour complet dans une seule direction. On aura donc une complexité en *O(N)*. Et après avoir tout collecter, le leader diffuse le tableau remplit des identifiants CHORD en partant du même principe pour la collection. La diffusion se fait donc avec une complexité en *O(N)*.
 
-On a donc une complexité de *N.log<sub>2</sub>(N) + 2N* en nombre de messages, soit une complexité en *O(N.log2(N))*.
+&nbsp;&nbsp;&nbsp;&nbsp;On a donc une complexité de *N.log<sub>2</sub>(N) + 2N* en nombre de messages, soit une complexité en *O(N.log2(N))*.
 
 ## Exercice 3 - Insertion d'un pair
 
