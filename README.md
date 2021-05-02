@@ -3,10 +3,12 @@
 <img align="right" height="100" width="250" src="/img/index.png">
 
 Réalisé par :
-  - **Namrata MISTRY M1 SAR**                       
-  - **Aliocha AMERGÉ M1 SAR**
+  - **Namrata MISTRY M1 SAR**    --     https://github.com/mnam9807
+  - **Aliocha AMERGÉ M1 SAR**    --     https://github.com/AliochaAMERGE
 
 **©SU/LMD/MU4IN403**
+
+Lien du projet : https://github.com/AliochaAMERGE/AR_project_2021.git
 
 ### TABLE OF CONTENTS
 
