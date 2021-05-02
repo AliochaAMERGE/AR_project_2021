@@ -63,14 +63,8 @@ Arborescence :
 │           └── header.h
 ├── Exercice_3
 ├── README.md
-├── runmpicc.sh
-└── utilities
-    ├── chord_MPI-etudiants.pdf
-    ├── chord_sigcomm.pdf
-    ├── draw.drawio
-    ├── Exemple_CHORD.pdf
-    ├── index.png
-    └── TD_CHORD-corrigé.pdf
+└── runmpicc.sh
+
 ```
 
 Afin de compilé un fichier .c utilisant MPI :
