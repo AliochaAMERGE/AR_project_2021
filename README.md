@@ -128,15 +128,19 @@ La recherche d'un pair responsable d'un clé se réalise de la manière suivante
 qui l'envoie au simulateur et affiche le résultat.
 
 
-## Exercice 2
+## Exercice 2 - Calcul des finger tables
 
 Fichier : *Exercice 2/src/finger_table.c*
+
+### Introduction
 
 L’objectif de cet exercice est de réaliser l’initialisation de la DHT CHORD avec une complexité en messages sous-quadratique (soit inférieure à *|Π|*<sup>2</sup> ) de manière distribuée. C'est-à-dire, pour chaque pair, le calcul de sa finger table.
 
 Initialement, les pairs sont organisés en anneau bidirectionnel ordonné en fonction du rang MPI et non pas en fonction des identifiants CHORD des pairs. Chaque pair connaît donc son voisin de droite et son voisin de gauche, et a la possibilité d’envoyer des messages uniquement à ses deux voisins.
 
 Le simulateur est encore présent dans cette partie, mais son impact est réduit, il se chargera de donner à tous les pairs leurs identifiants CHORD, les voisins gauche et droite, et leur indiquer s'ils sont initiateur ou non.
+
+### Algorithme
 
 Notre approche afin de résoudre ce problème est quelque peu naïve, nous essayons de reproduire le comportement du simulateur de l’exercice 1 en élisant un pair qui prendra ce rôle.
 Nous ne tirons pas totalement partis de la distribution de l’anneau, ni de sa bidirectionnalité dans la deuxième partie.
@@ -159,8 +163,8 @@ Début de ronde k (k) :
     if initiateur :
         envoyer <id_chord, 2k> à voisins de gauche et droite
         k++
-~ avec 2^k : la distance max à laquelle on envoie le message
-~ et id_chord : l’identifiant CHORD du pair
+# avec 2^k : la distance max à laquelle on envoie le message
+# et id_chord : l’identifiant CHORD du pair
 ```
 
 ```py
@@ -181,22 +185,22 @@ réception d’un message TAG_OUT (<id_chord_initiateur, distance, TAG_OUT ) :
   if !initiateur ou id_chord_initiateur > id_chord :
      initiateur = 0
      if distance > 1 :
-       ~ Si le message n’a pas atteint sa distance maximale
+       # Si le message n’a pas atteint sa distance maximale
         if émetteur == voisin droit :
             envoyer <id_chord_initiateur, distance - 1, TAG_OUT> à voisin de gauche
         else :
             envoyer <id_chord_initiateur, distance - 1, TAG_OUT> à voisin de droit
      else :
-      ~ le message a atteint sa distance maximale, il entame son retour
+      # le message a atteint sa distance maximale, il entame son retour
         if émetteur == voisin droit :
             envoyer <id_chord_initiateur, TAG_IN> à voisin de droit
         else :
             envoyer <id_chord_initiateur, TAG_IN> à voisin de gauche
   else :
-   ~ le message est revenu, nous avons un leader
+   # le message est revenu, nous avons un leader
      if id_chord_initiateur == id_chord : 
        id_chord élu
-    ~ Le processus élu lancera la collecte et la diffusion des identifiants CHORD
+    # Le processus élu lancera la collecte et la diffusion des identifiants CHORD
 ```
 
 #### Étape 2 : Collecte des identifiants CHORD
@@ -220,6 +224,11 @@ Pour chaque finger j allant de 0 à M :
                                        (en respectant l’ordre cyclique)
 
 
+### Justification de la correction de notre algorithme
+
+
+
+
 ### Complexité en nombre de messages
 
 La complexité de l’algorithme se base en nombre de messages envoyés. Supposons **N** le nombre de pairs dans la DHT. Chacun des pairs envoie 2 messages (voisins de droite et gauche) qui parcourent chacun une distance de 2<sup>k</sup>( avec **k** le nombre d’étapes).
@@ -229,3 +238,10 @@ Pour l’algorithme de l’élection du leader, on a une complexité en nombre d
 Ensuite lorsque le leader est élu, il lance la collecte des identifiants CHORD en partant par le voisin de droite et fait donc un tour complet dans une seule direction. On aura donc une complexité en *O(N)*. Et après avoir tout collecter, le leader diffuse le tableau remplit des identifiants CHORD en partant du même principe pour la collection. La diffusion se fait donc avec une complexité en *O(N)*.
 
 On a donc une complexité de *N.log<sub>2</sub>(N) + 2N* en nombre de messages, soit une complexité en *O(N.log2(N))*.
+
+## Exercice 3 - Insertion d'un pair
+
+Dans cet exercice, nous supposons avoir une DHT CHORD correctement initialisée. Nous supposons de plus que
+tout pair de rang MPI p dispose d’une liste inverse p contenant l’identifiant (et le rang MPI) de tout pair q ayant un
+finger sur p (i.e., il existe un k tel que f inger q [k] = id p ).
+
