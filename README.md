@@ -46,7 +46,9 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 ### Indication pour l'execution des codes :
 
 <details>
+  
   <summary>Arborescence : </summary>
+
 ```
 .
 ├── Exercice_1
@@ -74,7 +76,9 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 └── runmpicc.sh
 
 ```
+
 </details>
+
 Afin de compilé un fichier .c utilisant MPI :
 
 il est nécéssaire d'utiliser `mpicc` pour générer un executable.
