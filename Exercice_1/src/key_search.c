@@ -187,8 +187,6 @@ void recherche(int pair, int key) {
   if (responsable == NIL) {
     printf("La donnée %d n'existe pas dans la DHT \n", key);
   } else {
-    // printf("Le responsable de la donnée %d est (<P%d>, <Pair_%d>)\n", key,
-    //        status.MPI_SOURCE, responsable);
     printf("Le responsable de la donnée %d est <Pair_%d>\n", key, responsable);
   }
 

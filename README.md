@@ -21,7 +21,7 @@ Nos implémentations au cours de ce projet seront en langage C et se baseront su
 
 Nous supposerons l'envoie de messages FIFO et fiable tel que le garanti MPI.
 
-### Constante
+### Constantes
 
 Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
@@ -33,6 +33,13 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 - **M** : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
   - et également le nombre de fingers de chaque pairs
 
+### Méthodes utilitaires
+
+**int f(pair)** : retourne aléatoirement un identifiant CHORD unique parmis l'ensemble des pairs du système.
+
+**int g(pair)** : retourne aléatoirement un identifiant unique pour une donnée (clés) parmis l'ensemble des données du système.
+
+**int app(int k, int a, int b)** : vérifie si la clé k appartient à l'intervalle ]a,b].
 
 ### Indication pour l'execution des codes :
 
@@ -51,7 +58,7 @@ Arborescence :
 │   ├── Makefile
 │   ├── obj
 │   └── src
-│       ├── finger-table.c
+│       ├── finger_table.c
 │       └── include
 │           └── header.h
 ├── Exercice_3
@@ -85,6 +92,8 @@ Le dossier utilities contient
 
 ## Exercice 1 : Recherche d’une clé
 
+Fichier : *Exercice_1/src/key_search.c*
+
 ### Initialisation de la DHT
 
 Dans cet exercice, un processus simulateur initialisera la DHT CHORD de manière centralisée : il calculera l’ensemble des fingers tables après avoir tiré aléatoirement les identifiants des pairs.
@@ -108,6 +117,7 @@ Une fois les M fingers construits, ils sont envoyer au pair concerné.
 
 Implémentation la recherche du pair responsable d’une clé CHORD par un pair quelconque.
 
+Soit un pair quelconque initiateur de la recherche.
 
 
 
