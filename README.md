@@ -1,7 +1,9 @@
 # AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
+<img align="right" src="/utilities/index.png">
+
 Réalisé par :
-  - **Namrata MISTRY M1 SAR**
+  - **Namrata MISTRY M1 SAR**                       
   - **Aliocha AMERGÉ M1 SAR**
 
 **©SU/LMD/MU4IN403**
@@ -28,12 +30,14 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
 - N : le nombre de pairs soit NB_PROC - 1
 
-- M : la plage de valeurs (allant de 0 à (2^M)-1)
+- M : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
 
 
 ## Exercice 1 : Recherche d’une clé
 
+Dans cet exercice, un processus simulateur initialisera la DHT CHORD de manière centralisée : il calculera l’ensemble des fingers tables après avoir tiré aléatoirement les identifiants des pairs.
 
+Nous réalisons d'abord un tableau contenant les différents identifiants CHORD de notre DHT, tous unique, et tiré aléatoirement sur l'interval [0, 2<sup>M</sup> - 1]
 
 
 ### Variables dans le processus initiateur :
