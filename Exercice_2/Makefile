@@ -3,9 +3,9 @@
 ########################################################################
 
 # Compiler settings - Can be customized.
-CC = gcc
+CC = mpicc
 CXXFLAGS = -std=c11 -Wall
-LDFLAGS = 
+LDFLAGS = -lm -ldl
 
 # Makefile settings - Can be customized.
 APPNAME = myapp

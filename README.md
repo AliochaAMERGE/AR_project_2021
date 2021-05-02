@@ -25,22 +25,94 @@ Nous supposerons l'envoie de messages FIFO et fiable tel que le garanti MPI.
 
 Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
-- NB_PROC : Le nombre de processus MPI qui seront créer, 
+- **NB_PROC** : Le nombre de processus MPI qui seront créer, 
     - cela correspond aux N pairs, + 1 processus inititateur *P0*
 
-- N : le nombre de pairs soit NB_PROC - 1
+- **N** : le nombre de pairs soit NB_PROC - 1
 
-- M : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
+- **M** : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
+  - et également le nombre de fingers de chaque pairs
+
+
+### Indication pour l'execution des codes :
+
+Arborescence : 
+```
+.
+├── Exercice_1
+│   ├── Makefile
+│   ├── obj
+│   │   └── lookup.o
+│   └── src
+│       ├── include
+│       │   └── header.h
+│       └── key_search.c
+├── Exercice_2
+│   ├── Makefile
+│   ├── obj
+│   └── src
+│       ├── finger-table.c
+│       └── include
+│           └── header.h
+├── Exercice_3
+├── README.md
+├── runmpicc.sh
+└── utilities
+    ├── chord_MPI-etudiants.pdf
+    ├── chord_sigcomm.pdf
+    ├── draw.drawio
+    ├── Exemple_CHORD.pdf
+    ├── index.png
+    └── TD_CHORD-corrigé.pdf
+```
+
+Afin de compilé un fichier .c utilisant MPI :
+
+il est nécéssaire d'utiliser `mpicc` pour générer un executable.
+et de l'éxecuter avec `mpirun -np $2 --oversubscribe`  { avec $2 le nombre de paramètre }
+
+
+Chaque exercice dispose de son dossier et de son Makefile.
+
+Du fait que chaque exercice se compose d'un unique fichier `.c`, un script `runmpicc.sh` est présent.
+Ce dernier prend 2 paramètre : le chemin vers le fichier source, et le nombre de processus utile.
+Il compilera le fichier source, produira un executable, le lancera et le supprimera.
+
+De plus il est nécéssaire d'ajouter `-lm -ldl` au flags pour la compilation.
+
+Le dossier utilities contient
 
 
 ## Exercice 1 : Recherche d’une clé
 
+### Initialisation de la DHT
+
 Dans cet exercice, un processus simulateur initialisera la DHT CHORD de manière centralisée : il calculera l’ensemble des fingers tables après avoir tiré aléatoirement les identifiants des pairs.
 
-Nous réalisons d'abord un tableau contenant les différents identifiants CHORD de notre DHT, tous unique, et tiré aléatoirement sur l'interval [0, 2<sup>M</sup> - 1]
+Le processus simulateur construit d'abord un tableau contenant les différents identifiants CHORD de notre DHT, tous unique, et tiré aléatoirement sur l'intervalle [0, 2<sup>M</sup> - 1].
+
+Il construit ensuite, pour chaque processus leurs table de fingers et leurs envoie. La table est construite de la manière suivante :
+
+```
+Pour un processus d’identifiant CHORD id :
+
+Pour chaque finger j allant de 0 à M :
+    soit la clé = (id_chord + 2**j)
+    recherche du plus petit pair dont l’id CHORD est supérieur à la clé 
+                                       (en respectant l’ordre cyclique)
+```
+
+Une fois les M fingers construits, ils sont envoyer au pair concerné.
+
+### Recherche d'une clé
+
+Implémentation la recherche du pair responsable d’une clé CHORD par un pair quelconque.
 
 
-### Variables dans le processus initiateur :
+
+
+
+
 
 - id_chord : le tableau d'id_chord de chaque processus.
     - > Nous enverrons à chaque processus son id_chord
