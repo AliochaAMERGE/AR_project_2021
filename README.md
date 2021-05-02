@@ -21,6 +21,8 @@ Nos implémentations au cours de ce projet seront en langage C et se baseront su
 
 Nous supposerons l'envoie de messages FIFO et fiable tel que le garanti MPI.
 
+Tout au long de ce projet, nous vérifierons à bien respecter l'ordre cyclique.
+
 ### Constantes
 
 Au cours de ce projet nous utiliserons souvent les constantes suivantes :
@@ -49,7 +51,6 @@ Arborescence :
 ├── Exercice_1
 │   ├── Makefile
 │   ├── obj
-│   │   └── lookup.o
 │   └── src
 │       ├── include
 │       │   └── header.h
@@ -58,10 +59,16 @@ Arborescence :
 │   ├── Makefile
 │   ├── obj
 │   └── src
-│       ├── finger_table.c
-│       └── include
-│           └── header.h
+│       ├── include
+│       │   └── header.h
+│       └── finger_table.c
 ├── Exercice_3
+│   ├── Makefile
+│   ├── obj
+│   └── src
+│       ├── include
+│       │   └── header.h
+│       └── xxxxxxx.c  //todo : definir
 ├── README.md
 └── runmpicc.sh
 
@@ -80,8 +87,6 @@ Ce dernier prend 2 paramètre : le chemin vers le fichier source, et le nombre d
 Il compilera le fichier source, produira un executable, le lancera et le supprimera.
 
 De plus il est nécéssaire d'ajouter `-lm -ldl` au flags pour la compilation.
-
-Le dossier utilities contient
 
 
 ## Exercice 1 : Recherche d’une clé
@@ -104,6 +109,7 @@ Pour chaque finger j allant de 0 à M :
     recherche du plus petit pair dont l’id CHORD est supérieur à la clé 
                                        (en respectant l’ordre cyclique)
 ```
+NB: le finger[0] est le successeur du pair courant dans l'anneau.
 
 Une fois les M fingers construits, ils sont envoyer au pair concerné.
 
@@ -112,43 +118,114 @@ Une fois les M fingers construits, ils sont envoyer au pair concerné.
 Implémentation la recherche du pair responsable d’une clé CHORD par un pair quelconque.
 
 Soit un pair quelconque initiateur de la recherche.
+La recherche d'un pair responsable d'un clé se réalise de la manière suivante :
 
+- recherche du plus petit pair inférieur à la clé recherchée.
+  - Si ce pair est le successeur du pair courant, il est en charge de la donnée
+  - Sinon : on continue la recherche
 
-
-
-
-
-- id_chord : le tableau d'id_chord de chaque processus.
-    - > Nous enverrons à chaque processus son id_chord
-
-- fingers : tableau à deux dimensions contenant 
-     - > Pour chaque pairs : la liste de ses fingers (avec finger[0] son successeur)
-       - > Pour chaque finger : 
-         - fingers[0] : son MPI_rank
-         - fingers[1] : son id_chord
-
-### variable globales propre à chaque processus
-
-Status status;          // MPI_status
-
-int rank;               // MPI_rank du site
-
-int id_chord;           // id_chord du site
-
-int fingers [M][2];     // table de routage du site courant
-
-### lookup :
-
-
-### compilation :
-
-ajouter `-lm -ldl` lors de la compilation
+- Une fois le responsable d'une clé trouvé, nous faisons remonter son identité au pair initiateur, 
+qui l'envoie au simulateur et affiche le résultat.
 
 
 ## Exercice 2
 
-Simulateur : Tire N id_chord, et les donnes à des processus pris aléatoirement.
-Défini un certains nombre d'initiateur.
+Fichier : *Exercice 2/src/finger_table.c*
 
-Nous nous baserons sur l'algorithme de Hirschberg & Sinclair.
+L’objectif de cet exercice est de réaliser l’initialisation de la DHT CHORD avec une complexité en messages sous-quadratique (soit inférieure à *|Π|*<sup>2</sup> ) de manière distribuée. C'est-à-dire, pour chaque pair, le calcul de sa finger table.
 
+Initialement, les pairs sont organisés en anneau bidirectionnel ordonné en fonction du rang MPI et non pas en fonction des identifiants CHORD des pairs. Chaque pair connaît donc son voisin de droite et son voisin de gauche, et a la possibilité d’envoyer des messages uniquement à ses deux voisins.
+
+Le simulateur est encore présent dans cette partie, mais son impact est réduit, il se chargera de donner à tous les pairs leurs identifiants CHORD, les voisins gauche et droite, et leur indiquer s'ils sont initiateur ou non.
+
+Notre approche afin de résoudre ce problème est quelque peu naïve, nous essayons de reproduire le comportement du simulateur de l’exercice 1 en élisant un pair qui prendra ce rôle.
+Nous ne tirons pas totalement partis de la distribution de l’anneau, ni de sa bidirectionnalité dans la deuxième partie.
+
+L’algorithme se divise en quatre étapes :
+
+- Étape 1 : Élection d’un leader ( basé sur l’algorithme de Hirschberg & Sinclair )
+
+- Étape 2 : Le leader sera chargé de collecter les différents identifiants CHORD des pairs, avec d’en établir un tableau.
+
+- Étape 3 : Une fois le tableau d’identifiants CHORD complété, ce dernier sera retransmis à tous les pairs de l’anneau.
+
+- Étape 4 : Chaque pair ayant reçu le tableau précédemment construit se chargera de constituer sa finger table.
+
+
+#### Étape 1 : Élection d’un leader 
+
+```py
+Début de ronde k (k) :
+    if initiateur :
+        envoyer <id_chord, 2k> à voisins de gauche et droite
+        k++
+~ avec 2^k : la distance max à laquelle on envoie le message
+~ et id_chord : l’identifiant CHORD du pair
+```
+
+```py
+réception d’un message TAG_IN (<id_chord_initiateur, TAG_IN> ) :
+    if id_chord_initiateur != id_chord :
+        if émetteur == voisin droit :
+            envoyer <id_chord_initiateur, TAG_IN> à voisins de gauche
+        else :
+            envoyer <id_chord_initiateur, TAG_IN> à voisins de droite
+    else :
+        if nous avons reçu 2 messages TAG_IN :
+            initier_etape()
+```
+
+
+```py
+réception d’un message TAG_OUT (<id_chord_initiateur, distance, TAG_OUT ) :
+  if !initiateur ou id_chord_initiateur > id_chord :
+     initiateur = 0
+     if distance > 1 :
+       ~ Si le message n’a pas atteint sa distance maximale
+        if émetteur == voisin droit :
+            envoyer <id_chord_initiateur, distance - 1, TAG_OUT> à voisin de gauche
+        else :
+            envoyer <id_chord_initiateur, distance - 1, TAG_OUT> à voisin de droit
+     else :
+      ~ le message a atteint sa distance maximale, il entame son retour
+        if émetteur == voisin droit :
+            envoyer <id_chord_initiateur, TAG_IN> à voisin de droit
+        else :
+            envoyer <id_chord_initiateur, TAG_IN> à voisin de gauche
+  else :
+   ~ le message est revenu, nous avons un leader
+     if id_chord_initiateur == id_chord : 
+       id_chord élu
+    ~ Le processus élu lancera la collecte et la diffusion des identifiants CHORD
+```
+
+#### Étape 2 : Collecte des identifiants CHORD
+
+La collecte des identifiants se fera par la diffusion d’un tableau dans lequel chaque pair indiquera son identifiant CHORD. Cette collecte est initiée par le pair précédemment élu.
+
+#### Étape 3 : Diffusion du tableau d’identifiant
+
+La diffusion suit le même fonctionnement que la collecte. Le tableau précédemment constitué est diffusé dans l’anneau et stocké par tous les pairs.
+
+#### Étape 4 : Constitution de la finger table.
+
+Tout d'abord, on crée un tableau temporaire qui sera ordonné en fonction des identifiants CHORD. Une fois le tableau ordonné, on procède au calcul des finger qui est de taille M. 
+
+Voici le pseudo-code pour le calcul des fingers :
+Pour un processus d’identifiant CHORD id :
+
+Pour chaque finger j allant de 0 à M :
+    soit la clé = (id_chord + 2j)
+    recherche du plus petit pair dont l’id CHORD est supérieur à la clé 
+                                       (en respectant l’ordre cyclique)
+
+
+### Complexité en nombre de messages
+
+La complexité de l’algorithme se base en nombre de messages envoyés. Supposons **N** le nombre de pairs dans la DHT. Chacun des pairs envoie 2 messages (voisins de droite et gauche) qui parcourent chacun une distance de 2<sup>k</sup>( avec **k** le nombre d’étapes).
+
+Pour l’algorithme de l’élection du leader, on a une complexité en nombre de messages inférieur ou égale à **N*K**, soit une complexité en O(N.log<sub>2</sub>N). Le log<sub>2</sub>N correspond au nombre d’étapes. 
+
+Ensuite lorsque le leader est élu, il lance la collecte des identifiants CHORD en partant par le voisin de droite et fait donc un tour complet dans une seule direction. On aura donc une complexité en *O(N)*. Et après avoir tout collecter, le leader diffuse le tableau remplit des identifiants CHORD en partant du même principe pour la collection. La diffusion se fait donc avec une complexité en *O(N)*.
+
+On a donc une complexité de *N.log<sub>2</sub>(N) + 2N* en nombre de messages, soit une complexité en *O(N.log2(N))*.
