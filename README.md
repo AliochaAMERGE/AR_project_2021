@@ -1,6 +1,6 @@
 # AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
-<img align="right" src="/utilities/index.png">
+<img align="right" src="/img/index.png">
 
 Réalisé par :
   - **Namrata MISTRY M1 SAR**                       
@@ -159,16 +159,16 @@ L’algorithme se divise en quatre étapes :
 #### Étape 1 : Élection d’un leader 
 
 ```py
-Début de ronde k (k) :
+def Début de ronde k (k) :
     if initiateur :
-        envoyer <id_chord, 2k> à voisins de gauche et droite
+        envoyer <id_chord, 2**k> à voisins de gauche et droite
         k++
 # avec 2^k : la distance max à laquelle on envoie le message
 # et id_chord : l’identifiant CHORD du pair
 ```
 
 ```py
-réception d’un message TAG_IN (<id_chord_initiateur, TAG_IN> ) :
+def réception d’un message TAG_IN (<id_chord_initiateur, TAG_IN> ) :
     if id_chord_initiateur != id_chord :
         if émetteur == voisin droit :
             envoyer <id_chord_initiateur, TAG_IN> à voisins de gauche
@@ -181,7 +181,7 @@ réception d’un message TAG_IN (<id_chord_initiateur, TAG_IN> ) :
 
 
 ```py
-réception d’un message TAG_OUT (<id_chord_initiateur, distance, TAG_OUT ) :
+def réception d’un message TAG_OUT (<id_chord_initiateur, distance, TAG_OUT ) :
   if !initiateur ou id_chord_initiateur > id_chord :
      initiateur = 0
      if distance > 1 :
