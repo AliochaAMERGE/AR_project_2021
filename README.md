@@ -8,6 +8,32 @@ Réalisé par :
 
 **©SU/LMD/MU4IN403**
 
+### TABLE OF CONTENTS
+
+- [AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD](#ar-mu4in403----projet--implémentation-du-protocole-p2p-chord)
+  - [TABLE OF CONTENTS](#table-of-contents)
+- [Introduction](#introduction)
+  - [Constantes](#constantes)
+  - [Méthodes utilitaires](#méthodes-utilitaires)
+  - [Indication pour l'éxécution des codes :](#indication-pour-léxécution-des-codes-)
+- [Exercice 1 : Recherche d’une clé](#exercice-1--recherche-dune-clé)
+  - [Initialisation de la DHT](#initialisation-de-la-dht)
+  - [Recherche d'une clé](#recherche-dune-clé)
+- [Exercice 2 - Calcul des finger tables](#exercice-2---calcul-des-finger-tables)
+  - [Introduction](#introduction-1)
+  - [Algorithme](#algorithme)
+    - [Étape 1 : Élection d’un leader](#étape-1--élection-dun-leader)
+    - [Étape 2 : Collecte des identifiants CHORD](#étape-2--collecte-des-identifiants-chord)
+    - [Étape 3 : Diffusion du tableau d’identifiant](#étape-3--diffusion-du-tableau-didentifiant)
+    - [Étape 4 : Constitution de la finger table.](#étape-4--constitution-de-la-finger-table)
+  - [Justification de la correction de notre algorithme](#justification-de-la-correction-de-notre-algorithme)
+    - [Sûreté :](#sûreté-)
+    - [Vivacité :](#vivacité-)
+  - [Complexité en nombre de messages](#complexité-en-nombre-de-messages)
+- [Exercice 3 - Insertion d'un pair](#exercice-3---insertion-dun-pair)
+
+<div style="page-break-after: always;"></div>
+
 ## Introduction
 
 *CHORD* est une table de hachage distribuée (DHT). 
@@ -34,6 +60,9 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
 - **M** : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
   - et également le nombre de fingers de chaque pairs
+
+<div style="page-break-after: always;"></div>
+
 
 ### Méthodes utilitaires
 
@@ -78,25 +107,28 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
 </details>
 
+<div style="page-break-after: always;"></div>
+
 
 Afin de compilé un fichier .c utilisant MPI :
 
 il est nécéssaire d'utiliser `mpicc` pour générer un executable.
 et de l'éxecuter avec `mpirun -np $2 --oversubscribe`  { avec $2 le nombre de paramètre }
 
-
 Chaque exercice dispose de son dossier et de son Makefile.
 
-Du fait que chaque exercice se compose d'un unique fichier `.c`, un script `runmpicc.sh` est présent.
-Ce dernier prend 2 paramètre : le chemin vers le fichier source, et le nombre de processus utile.
-Il compilera le fichier source, produira un executable, le lancera et le supprimera.
+Du fait que chaque exercice se compose d'un unique fichier `.c`, un script `runmpicc.sh` est présent.   
+Ce dernier prend 2 paramètre : le chemin vers le fichier source, et le nombre de processus utile.   
+Il compilera le fichier source, produira un executable, le lancera et le supprimera.   
 
 De plus il est nécéssaire d'ajouter `-lm -ldl` au flags pour la compilation.
 
+<div style="page-break-after: always;"></div>
 
 ## Exercice 1 : Recherche d’une clé
 
-Fichier : *Exercice_1/src/key_search.c*
+Fichier : [*key_search.c*](Exercice_1/src/key_search.c)
+
 
 ### Initialisation de la DHT
 
@@ -129,13 +161,14 @@ La recherche d'un pair responsable d'un clé se réalise de la manière suivante
   - Si ce pair est le successeur du pair courant, il est en charge de la donnée
   - Sinon : on continue la recherche
 
-- Une fois le responsable d'une clé trouvé, nous faisons remonter son identité au pair initiateur, 
-qui l'envoie au simulateur et affiche le résultat.
+- Une fois le responsable d'une clé trouvé, nous faisons remonter son identité au pair initiateur, qui l'envoie au simulateur et affiche le résultat.
+
+<div style="page-break-after: always;"></div>
 
 
 ## Exercice 2 - Calcul des finger tables
 
-Fichier : *Exercice 2/src/finger_table.c*
+Fichier : [*finger_table.c*](Exercice_2/src/finger_table.c)
 
 ### Introduction
 
@@ -208,6 +241,8 @@ def réception d’un message TAG_OUT (<id_chord_initiateur, distance, TAG_OUT )
     # Le processus élu lancera la collecte et la diffusion des identifiants CHORD
 ```
 
+<div style="page-break-after: always;"></div>
+
 #### Étape 2 : Collecte des identifiants CHORD
 
 La collecte des identifiants se fera par la diffusion d’un tableau dans lequel chaque pair indiquera son identifiant CHORD. Cette collecte est initiée par le pair précédemment élu.
@@ -255,13 +290,18 @@ Le protocole *MPI* garantit les canaux d’envoie de message *FIFO* et *fiables*
 
 &nbsp;&nbsp;&nbsp;&nbsp;La complexité de l’algorithme se base en nombre de messages envoyés. Supposons **N** le nombre de pairs dans la DHT. Chacun des pairs envoie 2 messages (voisins de droite et gauche) qui parcourent chacun une distance de 2<sup>k</sup>( avec **k** le nombre d’étapes).
 
-&nbsp;&nbsp;&nbsp;&nbsp;Pour l’algorithme de l’élection du leader, on a une complexité en nombre de messages inférieur ou égale à **N*K**, soit une complexité en O(N.log<sub>2</sub>N). Le log<sub>2</sub>N correspond au nombre d’étapes. 
+&nbsp;&nbsp;&nbsp;&nbsp;Pour l’algorithme de l’élection du leader, on a une complexité en nombre de messages inférieur ou égale à **N*K**, soit une complexité en O(N.log<sub>2</sub>(N)). Le log<sub>2</sub>(N) correspond au nombre d’étapes. 
 
 &nbsp;&nbsp;&nbsp;&nbsp;Ensuite lorsque le leader est élu, il lance la collecte des identifiants CHORD en partant par le voisin de droite et fait donc un tour complet dans une seule direction. On aura donc une complexité en *O(N)*. Et après avoir tout collecter, le leader diffuse le tableau remplit des identifiants CHORD en partant du même principe pour la collection. La diffusion se fait donc avec une complexité en *O(N)*.
 
-&nbsp;&nbsp;&nbsp;&nbsp;On a donc une complexité de *N.log<sub>2</sub>(N) + 2N* en nombre de messages, soit une complexité en *O(N.log2(N))*.
+&nbsp;&nbsp;&nbsp;&nbsp;On a donc une complexité de *N.log<sub>2</sub>(N) + 2N* en nombre de messages, soit une complexité en *O(N.log<sub>2</sub>(N))*.
+
+<div style="page-break-after: always;"></div>
 
 ## Exercice 3 - Insertion d'un pair
+
+Fichier : [*insertion_pair.c*](Exercice_3/src/insertion_pair.c)
+
 
 Dans cet exercice, nous supposons avoir une DHT CHORD correctement initialisée. Nous supposons de plus que
 tout pair de rang MPI p dispose d’une liste inverse p contenant l’identifiant (et le rang MPI) de tout pair q ayant un
