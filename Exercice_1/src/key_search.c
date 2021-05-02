@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "./include/header.h"
 
-#define NB_PROC 11
+#define NB_PROC 55
 #define N (NB_PROC - 1)
 // nombre de sites (processus) en comptant le processus initiateur
-#define M 6  // nombre de fingers
+#define M 30  // nombre de fingers
 
 #define NIL -1
 /*LES TAGS */
