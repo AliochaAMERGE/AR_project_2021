@@ -1,6 +1,6 @@
-# AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
+## AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD
 
-<img align="right" src="/img/index.png">
+<img align="right" height="100" width="250" src="/img/index.png">
 
 Réalisé par :
   - **Namrata MISTRY M1 SAR**                       
@@ -43,7 +43,7 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
 **int app(int k, int a, int b)** : vérifie si la clé k appartient à l'intervalle ]a,b].
 
-### Indication pour l'execution des codes :
+### Indication pour l'éxécution des codes :
 
 <details>
   
@@ -74,10 +74,10 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 │       └── insertion_pair.c
 ├── README.md
 └── runmpicc.sh
-
 ```
 
 </details>
+
 
 Afin de compilé un fichier .c utilisant MPI :
 
@@ -240,7 +240,9 @@ Le protocole *MPI* garantit les canaux d’envoie de message *FIFO* et *fiables*
 #### Sûreté :
 
 &nbsp;&nbsp;&nbsp;&nbsp;Un processus pair est élu si il est initiateur **et** que son identifiant CHORD est plus grand que les autres pairs. Il est élu lorsque que le tag *TAG_OUT*, qu’il avait envoyé à une distance 2<sup>k</sup>, lui revient. L’unicité des identifiants CHORD garantit la propriété de sûreté et qu’**un** seul des pairs sera élu et deviendra le leader.
+
 &nbsp;&nbsp;&nbsp;&nbsp;Après avoir un leader, nous pouvons garantir que le tableau des identifiants CHORD sera bien construit avec tous les identifiants des pairs existant dans l’anneau car le tag TAG_COLLECTE lancé par le leader, dans le sens de l’aiguille d’une horloge (unidirectionnel), lui sera retourné par son prédécesseur.
+
 &nbsp;&nbsp;&nbsp;&nbsp;Une fois que le tag *TAG_COLLECTE* est revenu au leader, il relance un tour de message de manière unidirectionnel pour diffuser le tableau rempli de tous les identifiants CHORD. C’est ainsi que chacun des pairs de la DHT aura connaissance des identifiants des autres pairs et pourra donc établir le calcul des finger table.
 
 #### Vivacité :
