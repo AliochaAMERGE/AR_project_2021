@@ -10,28 +10,40 @@
 
 /* TAGS */
 
-
 /*Variables Globales*/
 MPI_Status status;
-int id_chord;     // identifiant chord du processus courant
-int rang;         // MPI_rank
+int id_chord;  // identifiant chord du processus courant
+int rang;      // MPI_rank
 
 /*
- * on ajoute le pair 
+ * on ajoute le pair
  *
- * choix arbitraire d'un neoud connu par ce pair -> si oui, on fait une recherche en gros
+ * choix arbitraire d'un noeud connu par ce pair -> si oui, on fait une
+ * recherche en gros
  *
  * Cherche son successeur
- * 
+ *
  * il envoie un message a son successeur avec son id-chord
- * 
+ *
  * le successeur envoie le nouvel id chord à tous ses reverse fingers
- * 
+ *
  * le nouveau pair doit trouver ses fingers
- * 
- * chacun met à jour ses fingers, et previent ces fingers ? --> je pense que non
+ *
+ * chacun met à jour ses fingers, et previent ces fingers ?
  */
 
+// on choisis le noeud de départ ?  --> aléatoire
+// une fois la table de finger mis à jour, doit on prévenir les nouveaux fingers
+// pour le reverse ? --> oui
 
-// on choisis le noeud de départ ?
-// une fois la table de finger mis à jour, doit on prévenir les nouveaux fingers pour le reverse ?
+int main(int argc, char const *argv[]) { return 0; }
+
+// TODO : *spoiler* trop de trucs
+/*
+ * - insérer pair
+ * - prévenir le contacte sur place
+ * - ajouter les fingers du nouveau pair
+ * - prevenir ces fingers pour inverse
+ * - mettre a jour les fingers des autres (censer pointer vers successeur du nouveau pair)
+ * - mettre a jour les inverses du nouveau pair
+ */

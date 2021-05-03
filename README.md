@@ -189,9 +189,12 @@ Fichier : [*finger_table.c*](Exercice_2/src/finger_table.c)
 
 &emsp;&emsp;Le simulateur est encore présent dans cette partie, mais son impact est réduit, il se chargera de donner à tous les pairs leurs identifiants CHORD, les voisins gauche et droite, et leur indiquer s'ils sont initiateur ou non.
 
+&emsp;&emsp;Pour cet exercice, contrairement au précédent, nous partirons du principe qu'aucun noeud ne connait initialement la taille de l'anneau, cette derniere sera détérminée au cours de l'élection.
+
 ### Algorithme
 
 &emsp;&emsp;Notre approche afin de résoudre ce problème est quelque peu naïve, nous essayons de reproduire le comportement du simulateur de l’exercice 1 en élisant un pair qui prendra ce rôle.
+
 &emsp;&emsp;Nous ne tirons pas totalement partis de la distribution de l’anneau, ni de sa bidirectionnalité dans la deuxième partie.
 
 L’algorithme se divise en quatre étapes :
@@ -251,6 +254,12 @@ def réception d’un message TAG_OUT (<id_chord_initiateur, distance, TAG_OUT )
        id_chord élu
     # Le processus élu lancera la collecte et la diffusion des identifiants CHORD
 ```
+
+A ce moment, nous pouvons déterminé la taille de l'anneau à partir du nombre d'étape ayant eu lieu pour le processus élu, et la distance restante dans le dernier message OUT (étant revenu au leader).
+
+taille de l'anneau = 2<sup>k</sup> - distante restante
+
+Dans notre implémentation nous ajoutons 1 à la taille de l'anneau afin de prendre en compte le processus simulateur et de simplifier l'envoie de message.
 
 <div style="page-break-after: always;"></div>
 
@@ -317,3 +326,4 @@ Fichier : [*insertion_pair.c*](Exercice_3/src/insertion_pair.c)
 Dans cet exercice, nous supposons avoir une DHT CHORD correctement initialisée. Nous supposons de plus que
 tout pair de rang MPI p dispose d’une liste inverse p contenant l’identifiant (et le rang MPI) de tout pair q ayant un
 finger sur p (i.e., il existe un k tel que f inger q [k] = id p ).
+
