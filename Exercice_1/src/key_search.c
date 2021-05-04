@@ -24,7 +24,7 @@
 
 /* les variables globales */
 MPI_Status status;
-int rank;
+int rang;
 int id_chord;
 // [0] : MPI_Rank ~ [1] : Id_chord
 int fingers[M][2];
@@ -128,9 +128,6 @@ void simulateur(void) {
 
     int fingers[M][2];
 
-    /* finger[0] = successeur,
-     * temp_rank est le rank MPI du successeur */
-
     int idChord = id_chord[p];
 
     printf("%2d > ", id_chord[p]);
@@ -140,6 +137,7 @@ void simulateur(void) {
       /* clé */
       int cle = (idChord + (int)pow(2, j)) % ((int)pow(2, M));
       int ok = 0;
+      // recherche pair assicué au finger
       for (int i = 1; i < NB_PROC; i++) {
         if (id_chord[i] >= cle) {
           // MPI RANK
@@ -412,11 +410,11 @@ int main(int argc, char* argv[]) {
     MPI_Finalize();
     exit(2);
   }
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rang(MPI_COMM_WORLD, &rang);
 
   srand(getpid());
 
-  if (rank == 0) {
+  if (rang == 0) {
     simulateur();
 
     /* Tire aleatoirement un id pair existant */

@@ -13,16 +13,13 @@ Lien du projet : https://github.com/AliochaAMERGE/AR_project_2021.git
 
 Ce projet a été réalisé dans le cadre de l'UE AR (MU4IN403) du master 1 Informatique mention SAR de *Sorbonne Université*.
 
-This project was realized within the framework of the UE AR (MU4IN403) of the master 1 Informatique mention SAR of *Sorbonne Université*.
-The whole project has been made in french.
-
 <div style="page-break-after: always;"></div>
 
-## TABLE OF CONTENTS
+## Table des matières
 
 - [AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD](#ar-mu4in403----projet--implémentation-du-protocole-p2p-chord)
-- [TABLE OF CONTENTS](#table-of-contents)
-- [Introduction](#introduction)
+- [Table des matières](#table-des-matières)
+- [Introduction et mise en contexte](#introduction-et-mise-en-contexte)
   - [Constantes](#constantes)
   - [Méthodes utilitaires](#méthodes-utilitaires)
   - [Indication pour l'éxécution des codes :](#indication-pour-léxécution-des-codes-)
@@ -30,7 +27,7 @@ The whole project has been made in french.
   - [Initialisation de la DHT](#initialisation-de-la-dht)
   - [Recherche d'une clé](#recherche-dune-clé)
 - [Exercice 2 - Calcul des finger tables](#exercice-2---calcul-des-finger-tables)
-  - [Introduction](#introduction-1)
+  - [Introduction](#introduction)
   - [Algorithme](#algorithme)
     - [Étape 1 : Élection d’un leader](#étape-1--élection-dun-leader)
     - [Étape 2 : Collecte des identifiants CHORD](#étape-2--collecte-des-identifiants-chord)
@@ -44,7 +41,7 @@ The whole project has been made in french.
 
 <div style="page-break-after: always;"></div>
 
-## Introduction
+## Introduction et mise en contexte
 
 *CHORD* est une table de hachage distribuée (DHT). 
 
@@ -168,7 +165,7 @@ Implémentation la recherche du pair responsable d’une clé CHORD par un pair 
 Soit un pair quelconque initiateur de la recherche.
 La recherche d'un pair responsable d'un clé se réalise de la manière suivante :
 
-- recherche du plus petit pair inférieur à la clé recherchée.
+- recherche du plus grand pair d'identifiant chord inférieur à la clé recherchée.
   - Si ce pair est le successeur du pair courant, il est en charge de la donnée
   - Sinon : on continue la recherche
 
@@ -323,7 +320,5 @@ Le protocole *MPI* garantit les canaux d’envoie de message *FIFO* et *fiables*
 Fichier : [*insertion_pair.c*](Exercice_3/src/insertion_pair.c)
 
 
-Dans cet exercice, nous supposons avoir une DHT CHORD correctement initialisée. Nous supposons de plus que
-tout pair de rang MPI p dispose d’une liste inverse p contenant l’identifiant (et le rang MPI) de tout pair q ayant un
-finger sur p (i.e., il existe un k tel que f inger q [k] = id p ).
+Dans cet exercice, nous supposons avoir une DHT CHORD correctement initialisée. Nous supposons de plus que tout pair de rang MPI p dispose d’une liste inverse p contenant l’identifiant (et le rang MPI) de tout pair q ayant un finger sur p (i.e., il existe un k tel que f inger q [k] = id p ).
 
