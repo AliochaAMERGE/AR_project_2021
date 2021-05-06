@@ -9,7 +9,9 @@
 #define M 6
 
 /* TAGS */
-#define TAG_INIT 0
+#define TAG_INIT 0       // initialisation de la DHT
+#define TAG_INSERTION 1  // insertion du nouveau pair
+#define TAG_RECHERCHE 2  // recherche d'un pair
 
 /* les variables globales */
 MPI_Status status;
@@ -19,6 +21,10 @@ int id_chord;
 int fingers[M][2];
 int* C;  // les données gérée par le site courant
 // Ces dernieres ne sont pas gérée pour le moment
+
+/*variables globales en plus pour l'insertion d'un pair*/
+int id_chord_responsable = -1;
+int rang_responsable = -1;
 
 /* ******************* Fonction d'appartenance à ]a,b] ***********************
  *               app vérifie si la clé k appartient à                         *
@@ -76,6 +82,27 @@ int compare(const void* a, const void* b) {
     return 1;
 }
 
+/*************************** Fonctions de recherche ***************************/
+
+int find(int arg_id_chord) {
+  int i = M - 1;
+
+  while (i >= 0) {
+    if (fingers[i][1] == arg_id_chord) {
+      // si initiateur est un finger connu
+      // on retourne le finger
+      return fingers[i][0];
+    } else {
+      // sinon,
+      // si nous avons dépassé l'initiateur
+      if (app(arg_id_chord, fingers[i][1], id_chord)) {
+        return fingers[i - 1][0];
+      }
+    }
+    i--;
+  }
+}
+
 /************ Initialisation de la DHT par le processus simulateur ************/
 
 void simulateur(void) {
@@ -116,12 +143,31 @@ void simulateur(void) {
   /* ***************************************************
    * Initialisation des fingers pour chaque processus  *
    *************************************************** */
+  int nouveau_pair_rang;
+  int responsable_nouveau;
+
+  do {
+    nouveau_pair_rang = 1 + rand() % N;
+    responsable_nouveau = 1 + rand() % N;
+  } while (nouveau_pair_rang == responsable_nouveau);
 
   /* envoie successif des informations à la création de *
    * chaque ensemble de finger   */
 
   // pour chaque pairs du systeme (simulateur exclu)
   for (int p = 1; p < NB_PROC; p++) {
+    if (p == nouveau_pair_rang) {
+      /* Le contenu du message
+       * message[0] : id_chord du pair qui s'insère
+       * message[1] : id_chord du pair responsable
+       * message[2] : rang MPI du pair reponsable
+       */
+      int messages[3] = {id_chord[p], id_chord[responsable_nouveau],
+                         responsable_nouveau};
+      MPI_Send(messages, 3, MPI_INT, p, TAG_INSERTION, MPI_COMM_WORLD);
+      continue;
+    }
+
     /* tableau des M fingrs */
     int fingers[M][2];
 
@@ -129,7 +175,6 @@ void simulateur(void) {
 
     printf("%2d > ", id_chord[p]);
 
-    //! a refaire
     // pour chaque finger du pair p
     for (int j = 0; j < M; j++) {
       /* clé */
@@ -138,6 +183,7 @@ void simulateur(void) {
       int i_tmp;
       // recherche pair assicué au finger
       for (int i = 1; i < NB_PROC; i++) {
+        if(i == nouveau_pair_rang) continue;
         if (id_chord[i] >= cle) {
           // MPI RANK
           fingers[j][0] = i;
@@ -168,7 +214,9 @@ void simulateur(void) {
 
   }  // fin for each processus
 
+  // envoie des inverses à chaque pairs
   for (int p = 1; p < NB_PROC; p++) {
+    MPI_Send(inverse[p], NB_PROC * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
   }
 
 }  // fin simulateur
@@ -177,10 +225,66 @@ void simulateur(void) {
 /*                  sauf pour le noeud que nous insérons                  */
 
 void init() {
-  MPI_Recv(&id_chord, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
-  MPI_Recv(fingers, M * 2, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
+  MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+  switch (status.MPI_TAG) {
+    case TAG_INSERTION:
+
+      // initialisation du nouveau pair
+
+      int message[3];
+      MPI_Recv(&message, 3, MPI_INT, 0, TAG_INSERTION, MPI_COMM_WORLD, &status);
+      id_chord = message[0];
+      // id_chord et rang MPI de l'unique pair à qui il peut envoyer et recevoir
+      // des messages initialement
+      id_chord_responsable = message[1];
+      rang_responsable = message[2];
+
+      // Le nouveau pair recherche son "successeur"
+      int msg_rech[2] = {id_chord, rang};
+      MPI_Send(msg_rech, 2, MPI_INT, rang_responsable, TAG_RECHERCHE,
+               MPI_COMM_WORLD);
+
+      MPI_Recv(msg_rech, 2, MPI_INT, rang_responsable, TAG_RECHERCHE,
+               MPI_COMM_WORLD, &status);
+      id_chord_responsable = msg_rech[0];
+      rang_responsable = msg_rech[1];
+
+      break;
+    default:  // par défaut il s'agit du tag TAG_INIT
+
+      // initialisation des pairs deja present dans la DHT
+
+      MPI_Recv(&id_chord, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
+      MPI_Recv(fingers, M * 2, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
+      break;
+  }
 }
-void receive(void) {}
+
+void receive(void) {
+  int message[2];
+  int id_chord_new = -1;
+  int rang_new = -1;
+
+  while (1) {
+    MPI_Recv(message, 2, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+             &status);
+
+    switch (status.MPI_TAG) {
+      case TAG_RECHERCHE:
+        // prévenir le noeud de sa responsabilité par rapport au nouveau pair
+        id_chord_new = message[0];
+        rang_new = message[1];
+
+        // nous cherchons le successeur du nouveau noeud (le responsable de son
+        // id_chord)
+        break;
+
+      default:
+        break;
+    }
+  }
+}
 
 int main(int argc, char* argv[]) {
   int nb_proc;
