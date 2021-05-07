@@ -107,12 +107,13 @@ int find(int arg_id_chord) {
 
 void simulateur(void) {
   /* initialisation des variables */
-  int id_chord[NB_PROC];  // tableau des identifiants CHORD
+  // tableau des identifiants CHORD {excluant le simulateur et le nouveau pair}
+  int id_chord[N - 1];
 
-  int inverse[NB_PROC][NB_PROC][2];
+  int inverse[N - 1][N - 1][2];
 
-  for (int i = 0; i < NB_PROC; i++) {
-    for (int j = 0; j < NB_PROC; j++) {
+  for (int i = 0; i < N - 1; i++) {
+    for (int j = 0; j < N - 1; j++) {
       inverse[i][j][0] = -1;  // Rang_MPI
       inverse[i][j][1] = -1;  // id_chord
     }
@@ -121,30 +122,31 @@ void simulateur(void) {
   /* Attribution des identifiants CHORD à chaque processus */
   /* Sauf le processus 0 qui correspond au simulateur */
 
-  id_chord[0] = -1;  // simulateur
-
-  for (int p = 1; p < NB_PROC; p++) {
+  for (int p = 1; p < N - 1; p++) {
     id_chord[p] = f(id_chord, p);
   }
 
   /* Trie dans l'ordre croissant les id_chord afin de former l'anneau */
-  qsort(id_chord, NB_PROC, sizeof(int), compare);
+  qsort(id_chord, N - 1, sizeof(int), compare);
   printf("(rang, pair) : ");
-  for (int p = 0; p < NB_PROC; p++) {
+  for (int p = 0; p < N - 1; p++) {
     // affichage des id_chord de chaque proche
     printf("(%d, %d)\t", p, id_chord[p]);
   }
   printf("\n");
   /* Envoi des identifiants chord au pairs du système */
-  for (int p = 1; p < NB_PROC; p++) {
-    MPI_Send(&id_chord[p], 1, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+  for (int p = 0; p < N - 1; p++) {
+    MPI_Send(&id_chord[p], 1, MPI_INT, p - 1, TAG_INIT, MPI_COMM_WORLD);
   }
-
+  
+  
   /* ***************************************************
    * Initialisation des fingers pour chaque processus  *
    *************************************************** */
   int nouveau_pair_rang;
   int responsable_nouveau;
+
+  // TODO ON EN EST LA !!
 
   do {
     nouveau_pair_rang = 1 + rand() % N;
@@ -183,7 +185,7 @@ void simulateur(void) {
       int i_tmp;
       // recherche pair assicué au finger
       for (int i = 1; i < NB_PROC; i++) {
-        if(i == nouveau_pair_rang) continue;
+        if (i == nouveau_pair_rang) continue;
         if (id_chord[i] >= cle) {
           // MPI RANK
           fingers[j][0] = i;
