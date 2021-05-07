@@ -4,9 +4,11 @@
 
 #include "./include/header.h"
 
-#define NB_PROC 11     // inconnu des pairs
-#define N NB_PROC - 1  // inconnu des pairs
+#define NB_PROC 11       // inconnu des pairs
+#define N (NB_PROC - 1)  // inconnu des pairs
 #define M 6
+
+#define NIL -1
 
 /* TAGS */
 #define TAG_INIT 0       // initialisation de la DHT
@@ -19,6 +21,7 @@ int rang;
 int id_chord;
 // [0] : MPI_Rank ~ [1] : Id_chord
 int fingers[M][2];
+int inverse[N][N][2];
 int* C;  // les données gérée par le site courant
 // Ces dernieres ne sont pas gérée pour le moment
 
@@ -85,22 +88,25 @@ int compare(const void* a, const void* b) {
 /*************************** Fonctions de recherche ***************************/
 
 int find(int arg_id_chord) {
-  int i = M - 1;
-
-  while (i >= 0) {
-    if (fingers[i][1] == arg_id_chord) {
-      // si initiateur est un finger connu
-      // on retourne le finger
+  for (int i = M - 1; i >= 0; i--) {
+    if (app(arg_id_chord, fingers[i][1], id_chord)) {
       return fingers[i][0];
-    } else {
-      // sinon,
-      // si nous avons dépassé l'initiateur
-      if (app(arg_id_chord, fingers[i][1], id_chord)) {
-        return fingers[i - 1][0];
+    }
+  }
+  return NIL;
+}
+
+int find_inverse(int arg_id_chord) {
+  int temp = inverse[0][0];
+
+  for (int i = 1; i <= N; i++) {
+    if (app(arg_id_chord, id_chord, inverse[i][1])) {  // ???? a verifier demain
+      if (app(arg_id_chord, inverse[i][1], temp)) {    // ???? a verifier demain
+        temp = inverse[i][0];
       }
     }
-    i--;
   }
+  return temp;
 }
 
 /************ Initialisation de la DHT par le processus simulateur ************/
@@ -110,10 +116,10 @@ void simulateur(void) {
   // tableau des identifiants CHORD {excluant le simulateur et le nouveau pair}
   int id_chord[N - 1];
 
-  int inverse[N - 1][N - 1][2];
+  int inverse[N][N][2];
 
-  for (int i = 0; i < N - 1; i++) {
-    for (int j = 0; j < N - 1; j++) {
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
       inverse[i][j][0] = -1;  // Rang_MPI
       inverse[i][j][1] = -1;  // id_chord
     }
@@ -122,7 +128,7 @@ void simulateur(void) {
   /* Attribution des identifiants CHORD à chaque processus */
   /* Sauf le processus 0 qui correspond au simulateur */
 
-  for (int p = 1; p < N - 1; p++) {
+  for (int p = 0; p < N - 1; p++) {
     id_chord[p] = f(id_chord, p);
   }
 
@@ -136,40 +142,18 @@ void simulateur(void) {
   printf("\n");
   /* Envoi des identifiants chord au pairs du système */
   for (int p = 0; p < N - 1; p++) {
-    MPI_Send(&id_chord[p], 1, MPI_INT, p - 1, TAG_INIT, MPI_COMM_WORLD);
+    MPI_Send(&id_chord[p], 1, MPI_INT, p + 1, TAG_INIT, MPI_COMM_WORLD);
   }
-  
-  
+
   /* ***************************************************
    * Initialisation des fingers pour chaque processus  *
    *************************************************** */
-  int nouveau_pair_rang;
-  int responsable_nouveau;
-
-  // TODO ON EN EST LA !!
-
-  do {
-    nouveau_pair_rang = 1 + rand() % N;
-    responsable_nouveau = 1 + rand() % N;
-  } while (nouveau_pair_rang == responsable_nouveau);
 
   /* envoie successif des informations à la création de *
    * chaque ensemble de finger   */
 
   // pour chaque pairs du systeme (simulateur exclu)
-  for (int p = 1; p < NB_PROC; p++) {
-    if (p == nouveau_pair_rang) {
-      /* Le contenu du message
-       * message[0] : id_chord du pair qui s'insère
-       * message[1] : id_chord du pair responsable
-       * message[2] : rang MPI du pair reponsable
-       */
-      int messages[3] = {id_chord[p], id_chord[responsable_nouveau],
-                         responsable_nouveau};
-      MPI_Send(messages, 3, MPI_INT, p, TAG_INSERTION, MPI_COMM_WORLD);
-      continue;
-    }
-
+  for (int p = 0; p < N - 1; p++) {
     /* tableau des M fingrs */
     int fingers[M][2];
 
@@ -182,18 +166,15 @@ void simulateur(void) {
       /* clé */
       int cle = (idChord + (int)pow(2, j)) % ((int)pow(2, M));
       int ok = 0;
-      int i_tmp;
       // recherche pair assicué au finger
-      for (int i = 1; i < NB_PROC; i++) {
-        if (i == nouveau_pair_rang) continue;
+      for (int i = 0; i < N - 1; i++) {
         if (id_chord[i] >= cle) {
-          // MPI RANK
-          fingers[j][0] = i;
-          // ID_CHORD
-          fingers[j][1] = id_chord[i];
-
-          inverse[i][p][0] = p;
-          inverse[i][p][1] = id_chord[p];
+          // table des fingers
+          fingers[j][0] = i;            // MPI RANK
+          fingers[j][1] = id_chord[i];  // ID_CHORD
+          // table inverse
+          inverse[i][p][0] = p;            // MPI RANK
+          inverse[i][p][1] = id_chord[p];  // ID_CHORD
 
           ok = 1;
           break;
@@ -212,14 +193,30 @@ void simulateur(void) {
     printf("\n");
 
     // Envoie du tableau fingers au processus p
-    MPI_Send(fingers, M * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+    MPI_Send(fingers, M * 2, MPI_INT, p + 1, TAG_INIT, MPI_COMM_WORLD);
 
   }  // fin for each processus
 
   // envoie des inverses à chaque pairs
-  for (int p = 1; p < NB_PROC; p++) {
-    MPI_Send(inverse[p], NB_PROC * 2, MPI_INT, p, TAG_INIT, MPI_COMM_WORLD);
+  for (int p = 0; p < N - 1; p++) {
+    MPI_Send(inverse[p + 1], (N)*2, MPI_INT, p + 1, TAG_INIT, MPI_COMM_WORLD);
   }
+
+  /* création du nouveau pair */
+
+  int nouveau_pair_id_chord = f(id_chord, nouveau_pair_id_chord);
+  int nouveau_pair_rang = NB_PROC;
+  int responsable_nouveau = 1 + rand() % (N - 1);
+
+  /* Le contenu du message
+   * messages[0] : id_chord du pair qui s'insère
+   * messages[1] : id_chord du pair responsable
+   * messages[2] : rang MPI du pair reponsable
+   */
+  int messages[3] = {nouveau_pair_rang, id_chord[responsable_nouveau],
+                     responsable_nouveau};
+  MPI_Send(messages, 3, MPI_INT, nouveau_pair_rang, TAG_INSERTION,
+           MPI_COMM_WORLD);
 
 }  // fin simulateur
 
@@ -252,6 +249,8 @@ void init() {
       id_chord_responsable = msg_rech[0];
       rang_responsable = msg_rech[1];
 
+      // debut de la recherche des fingers
+
       break;
     default:  // par défaut il s'agit du tag TAG_INIT
 
@@ -259,14 +258,17 @@ void init() {
 
       MPI_Recv(&id_chord, 1, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
       MPI_Recv(fingers, M * 2, MPI_INT, 0, TAG_INIT, MPI_COMM_WORLD, &status);
+      MPI_Recv(inverse, (N * 2), MPI_INT, MPI_ANY_SOURCE, TAG_INIT,
+               MPI_COMM_WORLD, &status);
       break;
   }
 }
 
 void receive(void) {
-  int message[2];
-  int id_chord_new = -1;
-  int rang_new = -1;
+  int message[2];                 /* le contenu du message recu */
+  int nouveau_pair_id_chord = -1; /* id_chord du nouveau pair */
+  int nouveau_pair_rang = -1;     /* rang du nouveau pair */
+  int next;                       /* pair suivant pour la recherche */
 
   while (1) {
     MPI_Recv(message, 2, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
@@ -275,8 +277,23 @@ void receive(void) {
     switch (status.MPI_TAG) {
       case TAG_RECHERCHE:
         // prévenir le noeud de sa responsabilité par rapport au nouveau pair
-        id_chord_new = message[0];
-        rang_new = message[1];
+        nouveau_pair_id_chord = message[0];
+        nouveau_pair_rang = message[1];
+
+        if (nouveau_pair_id_chord > id_chord) {
+          // recherche dans les fingers le plus grand finger inferieur à
+          // l'identifiant chord du nouveau pair
+
+          next = find(nouveau_pair_id_chord);
+          if(next == NIL){
+            next = fingers[0][0];
+          }
+        } else if (nouveau_pair_id_chord < id_chord) {
+          // recherche dans les inverses le plus petit
+          next = find_inverse(nouveau_pair_id_chord);
+        }
+
+        MPI_Send(message, un, truc, en, plus);
 
         // nous cherchons le successeur du nouveau noeud (le responsable de son
         // id_chord)
