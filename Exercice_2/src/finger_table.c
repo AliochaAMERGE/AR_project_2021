@@ -264,7 +264,7 @@ void receive(void) {
         // sort de receive() puis se termine
 
       default:
-        perror("Ne doit pas être dans le default \n");
+        perror("Erreur dans le switch case : TAG inconnu !");
         break;
     }
   }

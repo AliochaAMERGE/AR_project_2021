@@ -391,7 +391,7 @@ void receive() {
         return;
 
       default:
-        perror("default in lookup()");
+        perror("Error en la switch case: TAG desconocido !");
         break;
     }
   }
