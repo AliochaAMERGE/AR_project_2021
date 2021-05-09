@@ -211,11 +211,9 @@ L’algorithme se divise en quatre étapes :
 
 &emsp;**•** **Étape 1** : Élection d’un leader ( basé sur l’algorithme de Hirschberg & Sinclair )
 
-&emsp;**•** **Étape 2** : Le leader sera chargé de collecter les différents identifiants CHORD des pairs, 
-&emsp;&emsp;&emsp;&emsp; afin d’en établir un tableau.
+&emsp;**•** **Étape 2** : Le leader sera chargé de collecter les différents identifiants CHORD des pairs, afin d’en établir un tableau.
 
-&emsp;**•** **Étape 3** : Une fois le tableau d’identifiants CHORD complété, ce dernier sera retransmis 
-&emsp;&emsp;&emsp;&emsp; à tous les pairs de l’anneau.
+&emsp;**•** **Étape 3** : Une fois le tableau d’identifiants CHORD complété, ce dernier sera retransmis à tous les pairs de l’anneau.
 
 &emsp;**•** **Étape 4** : Chaque pair ayant reçu le tableau précédemment construit se chargera de constituer sa finger table.
 
