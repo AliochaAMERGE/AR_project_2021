@@ -517,23 +517,6 @@ void receive(void) {
 
         break;
 
-      case TAG_FIN:
-        printf("%d se termine\n", rang);
-        printf("Tableau fingers ");
-        printf("%d > ", id_chord);
-        for (int i = 0; i < M; i++) {
-          printf("%3d", fingers[i][1]);
-        }
-        printf("\n");
-        printf("Tableau inverse ");
-        printf("%d > ", id_chord);
-        for (int i = 0; i < N; i++) {
-          if (inverse[i][1] != -1) printf("%3d", inverse[i][1]);
-        }
-        printf("\n");
-
-        return;
-
       case TAG_MAJ_INVERSE:
 
         nouveau_pair_id_chord = message[0];
@@ -566,6 +549,23 @@ void receive(void) {
                  MPI_COMM_WORLD);
 
         break;
+
+      case TAG_FIN:
+        printf("%d se termine\n", rang);
+        printf("Tableau fingers ");
+        printf("%d > ", id_chord);
+        for (int i = 0; i < M; i++) {
+          printf("%3d", fingers[i][1]);
+        }
+        printf("\n");
+        printf("Tableau inverse ");
+        printf("%d > ", id_chord);
+        for (int i = 0; i < N; i++) {
+          if (inverse[i][1] != -1) printf("%3d", inverse[i][1]);
+        }
+        printf("\n");
+
+        return;
 
       default:
         perror("Fehler im switch case : TAG unbekannt !");

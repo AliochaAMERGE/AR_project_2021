@@ -1,5 +1,3 @@
-// TODO : commenter
-
 int app(int k, int a, int b);
 
 int f(int* id_already_used, int p);

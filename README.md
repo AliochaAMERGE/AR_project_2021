@@ -16,6 +16,8 @@ Ce projet a été réalisé dans le cadre de l'UE AR (MU4IN403) du master 1 Info
 <div style="page-break-after: always;"></div>
 
 ## Table des matières
+<font size="2">
+<font color=purple>
 
 - [AR (MU4IN403)  - PROJET : Implémentation du protocole P2P CHORD](#ar-mu4in403----projet--implémentation-du-protocole-p2p-chord)
 - [Table des matières](#table-des-matières)
@@ -46,10 +48,11 @@ Ce projet a été réalisé dans le cadre de l'UE AR (MU4IN403) du master 1 Info
     - [Étape 3  : Recherche des fingers du nouveau pair et mise à jour des inverses pour ces pairs](#étape-3---recherche-des-fingers-du-nouveau-pair-et-mise-à-jour-des-inverses-pour-ces-pairs)
     - [Étape 4 : Phase de terminaison et affichage](#étape-4--phase-de-terminaison-et-affichage)
   - [Justification de la correction de notre algorithme](#justification-de-la-correction-de-notre-algorithme-1)
-    - [Sureté](#sureté)
-    - [Vivacité](#vivacité)
+    - [Sûreté :](#sûreté--1)
+    - [Vivacité :](#vivacité--1)
     - [Compléxité](#compléxité)
 
+</font>
 <div style="page-break-after: always;"></div>
 
 ## Introduction et mise en contexte
@@ -72,15 +75,13 @@ Tout au long de ce projet, nous vérifierons à bien respecter l'ordre cyclique.
 
 Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
-- **NB_PROC** : Le nombre de processus MPI qui seront créer, 
-    - cela correspond aux N pairs, + 1 processus inititateur *P0*
+&emsp;&emsp;**•** **NB_PROC** : Le nombre de processus MPI qui seront créer, 
+&emsp; &emsp; &emsp; &emsp;&emsp;&emsp; cela correspond aux N pairs, + 1 processus inititateur *P0*
 
-- **N** : le nombre de pairs soit NB_PROC - 1
+&emsp;&emsp;**•** **N** : le nombre de pairs soit NB_PROC - 1
 
-- **M** : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
-  - et également le nombre de fingers de chaque pairs
-
-<div style="page-break-after: always;"></div>
+&emsp;&emsp;**•** **M** : la plage de valeurs ( allant de 0 à (2<sup>M</sup>) - 1 )
+&emsp; &emsp; &emsp; et également le nombre de fingers de chaque pairs
 
 
 ### Méthodes utilitaires
@@ -90,6 +91,8 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 **int g(pair)** : retourne aléatoirement un identifiant unique pour une donnée (clés) parmis l'ensemble des données du système.
 
 **int app(int k, int a, int b)** : vérifie si la clé k appartient à l'intervalle ]a,b].
+
+<div style="page-break-after: always;"></div>
 
 ### Indication pour l'éxécution des codes :
 
@@ -126,13 +129,12 @@ Au cours de ce projet nous utiliserons souvent les constantes suivantes :
 
 </details>
 
-<div style="page-break-after: always;"></div>
 
 
 Afin de compilé un fichier .c utilisant MPI :
 
 il est nécéssaire d'utiliser `mpicc` pour générer un executable.
-et de l'éxecuter avec `mpirun -np $2 --oversubscribe`  { avec $2 le nombre de paramètre }
+et de l'éxecuter avec `mpirun -np $2 --oversubscribe`  { avec $2 le nombre de processus }
 
 Chaque exercice dispose de son dossier et de son Makefile.
 
@@ -176,11 +178,11 @@ Implémentation la recherche du pair responsable d’une clé CHORD par un pair 
 Soit un pair quelconque initiateur de la recherche.
 La recherche d'un pair responsable d'un clé se réalise de la manière suivante :
 
-- recherche du plus grand pair d'identifiant chord inférieur à la clé recherchée.
-  - Si ce pair est le successeur du pair courant, il est en charge de la donnée
-  - Sinon : on continue la recherche
+&emsp;&emsp;**•** recherche du plus grand pair d'identifiant chord inférieur à la clé recherchée.
+  &emsp;&emsp;&emsp;&emsp;**•**  Si ce pair est le successeur du pair courant, il est en charge de la donnée
+  &emsp;&emsp;&emsp;&emsp;**•**  Sinon : on continue la recherche
 
-- Une fois le responsable d'une clé trouvé, nous faisons remonter son identité au pair initiateur, qui l'envoie au simulateur et affiche le résultat.
+&emsp;&emsp;**•** Une fois le responsable d'une clé trouvé, nous faisons remonter son identité au pair initiateur, qui l'envoie au simulateur et affiche le résultat.
 
 <div style="page-break-after: always;"></div>
 
@@ -207,13 +209,15 @@ Fichier : [*finger_table.c*](Exercice_2/src/finger_table.c)
 
 L’algorithme se divise en quatre étapes :
 
-- **Étape 1** : Élection d’un leader ( basé sur l’algorithme de Hirschberg & Sinclair )
+&emsp;**•** **Étape 1** : Élection d’un leader ( basé sur l’algorithme de Hirschberg & Sinclair )
 
-- **Étape 2** : Le leader sera chargé de collecter les différents identifiants CHORD des pairs, avec d’en établir un tableau.
+&emsp;**•** **Étape 2** : Le leader sera chargé de collecter les différents identifiants CHORD des pairs, 
+&emsp;&emsp;&emsp;&emsp; afin d’en établir un tableau.
 
-- **Étape 3** : Une fois le tableau d’identifiants CHORD complété, ce dernier sera retransmis à tous les pairs de l’anneau.
+&emsp;**•** **Étape 3** : Une fois le tableau d’identifiants CHORD complété, ce dernier sera retransmis 
+&emsp;&emsp;&emsp;&emsp; à tous les pairs de l’anneau.
 
-- **Étape 4** : Chaque pair ayant reçu le tableau précédemment construit se chargera de constituer sa finger table.
+&emsp;**•** **Étape 4** : Chaque pair ayant reçu le tableau précédemment construit se chargera de constituer sa finger table.
 
 
 #### Étape 1 : Élection d’un leader 
@@ -355,13 +359,15 @@ De plus, l'*ordre cyclique* sera toujours respecté.
 
 Notre algorithme se déroule sur quatre étapes :
 
-- **Étape 1** : Recherche du successeur du nouveau pair
+&emsp;&emsp;**•** **Étape 1** : Recherche du successeur du nouveau pair
 
-- **Étape 2** : Mise à jour des inverses du successeur et du nouveau pair
+&emsp;&emsp;**•** **Étape 2** : Mise à jour des inverses du successeur et du nouveau pair
 
-- **Étape 3** : Recherche des fingers du nouveau pair et mise à jour des inverses pour ces pairs
+&emsp;&emsp;**•**  **Étape 3** : Recherche des fingers du nouveau pair et mise à jour des inverses pour ces pairs
 
-- **Étape 4** : Phase de terminaison et affichage
+&emsp;&emsp;**•**  **Étape 4** : Phase de terminaison et affichage
+
+<div style="page-break-after: always;"></div>
 
 #### Étape 0 : Création de la DHT et du nouveau pair par le simulateur
 
@@ -369,9 +375,10 @@ Le simulateur qui créé la DHT, et insére le nouveau pair à l'aide des *TAG_I
 
 La création de la DHT est identique à l'exercice 1, la table des inverses en plus. De plus nous excluons un pair, ce dernier sera le nouveau pair.
 
-- **TAG_INSERTION**
+- *TAG_INSERTION*
 ```py
-def réception d’un message TAG_INSERTION(<nouveau_pair_id_chord, id_chord_resp_nouveau, MPI_rang_resp_nouveau, TAG_INSERTION>) :
+def réception d’un message TAG_INSERTION(<nouveau_pair_id_chord, id_chord_resp_nouveau, 
+                                          MPI_rang_resp_nouveau, TAG_INSERTION>) :
   # recherche du successeur
   envoyer <nouveau_pair_id_chord, nouveau_pair_MPI_rang, TAG_RECHERCHE > à MPI_rang_resp_nouveau
   # attente de la table des inverses 
@@ -396,9 +403,12 @@ def réception d’un message TAG_INSERTION(<nouveau_pair_id_chord, id_chord_res
 &emsp;&emsp;Une fois le successeur trouvé, il sera prévenu à l'aide du *TAG_SUCCESSEUR*, nous attendons la réception des différents attribut lié à la DHT (la table des fingers, et la table des inverses).
 Le successeur sera en charge de la suite des opérations, le nouveau pair reste uniquement en attente des messages de son successeur.
 
-- **TAG_RECHERCHE**
+<div style="page-break-after: always;"></div>
+
+- *TAG_RECHERCHE*
 ```py
-def réception d’un message TAG_RECHERCE (<nouveau_pair_id_chord, nouveau_pair_MPI_rang, TAG_RECHERCHE>) :
+def réception d’un message TAG_RECHERCE (<nouveau_pair_id_chord, 
+                                  nouveau_pair_MPI_rang, TAG_RECHERCHE>) :
   # en respectant l'ordre cyclique
   if(nouveau_pair_id_chord > id_chord):
     next = recherche du successeur du nouveau_pair_id_chord dans la *table des fingers*
@@ -408,7 +418,7 @@ def réception d’un message TAG_RECHERCE (<nouveau_pair_id_chord, nouveau_pair
       [...] # cf étape suivante
   else if(nouveau_pair_id_chord > id_chord):
     next = recherche du successeur du nouveau_pair_id_chord dans la *table des inverses*
-  #continue la recherche du successeur
+  # continue la recherche du successeur
   envoyer <nouveau_pair_id_chord, nouveau_pair_MPI_rang, TAG_RECHERCHE> à next
 ```
 
@@ -423,13 +433,19 @@ def réception d’un message TAG_RECHERCE (<nouveau_pair_id_chord, nouveau_pair
 
 &emsp;&emsp;Ce dernier mettra donc à jour sa table d'inverse, et celle du nouveau pair en fonction des informations qu'il recevra.
 
-- **TAG_SUCCESSEUR**
+<div style="page-break-after: always;"></div>
+
+- *TAG_SUCCESSEUR*
+
 ```py
-def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, nouveau_pair_MPI_rang, TAG_SUCCESSEUR>):
-  for i in inverses : #parcours de la table d'inverse du successeur
+def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, 
+                                  nouveau_pair_MPI_rang, TAG_SUCCESSEUR>):
+  for i in inverses : # parcours de la table d'inverse du successeur
     if(inverse[i] != -1):
-      envoyer <nouveau_pair_id_chord, nouveau_pair_MPI_rang,successseur_id_chord, TAG_MAJ_INVERSE > à i
-      reception <i, nouveau_pair_id_chord, successseur_id_chord, TAG_MAJ_INVERSE>
+      envoyer <nouveau_pair_id_chord, nouveau_pair_MPI_rang,
+                            successseur_id_chord, TAG_MAJ_INVERSE > à i
+      reception <i, nouveau_pair_id_chord, 
+                                successseur_id_chord, TAG_MAJ_INVERSE>
       
       # nous gardons successeur dans la table des inverses
       if(successseur_id_chord != -1): 
@@ -441,21 +457,40 @@ def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, nouveau_pa
       # nous ajoutons i dans la table d'inverse du nouveau pair
       if(nouveau_pair_id_chord != -1):
         mise à jour de inverse[i] du nouveau pair avec les informations de i
-  #fin de la mise à jour de la table inverse
+  # fin de la mise à jour de la table inverse
+  envoyer <inverses, TAG_MAJ_INVERSE> à nouveau_pair_id_chord
+  [...] # cf etape 3
 ```
+- *TAG_MAJ_INVERSE*
+```py
+def réception d’un message TAG_MAJ_INVERSE (<nouveau_pair_id_chord, 
+                    nouveau_pair_MPI_rang, MPI_source TAG_MAJ_INVERSE>):
 
+  for each finger pointant vers le successeur du nouveau pair :
+    # nous recalculons la clé pour vérifier le besoin de mise à jour
+    cle = (id_chord + 2**i)
+    if cle ∈ [id_chord_source, nouveau_pair_id_chord[ :
+      mise à jour du finger
+      ajout du flag dans le message pour prevenir le successeur
+    else :
+      pas de mise à jour
+
+  envoyer<mise à jour, TAG_MAJ_INVERSE> au successeur du nouveau pair
+
+```
 
 #### Étape 3  : Recherche des fingers du nouveau pair et mise à jour des inverses pour ces pairs
 
 &emsp;&emsp;Après la mise à jour des inverses faites à l'étape précédente, le successeur procéde au cacul de la table des fingers du nouveau pair. Pour ce faire, il calcul les clé des fingers du nouveau pair (connaissant son id_chord) à l'aide de la formule : ( nouveau_pair_id_chord + 2<sup>j</sup> *avec j le numéro de finger*) . Pour chaque clé, le successeur du nouveau pair lance une recherche (avec un tag *TAG_FINGERS*) de la valeurs de la clé pour trouver le pair responsable de cette dernière, et l'ajoute dans la table des fingers du nouveau pair.
 
-**NB** : certaines clé (comprise entre ]*nouveau_pair*, *successeur*]) seront prise en charge par le successeur, nous n'aurons donc pas besoin d'envoyer de message. De même pour les clé compris entre ]successeur du nouveau pair, successeur du successeur].
+**NB** : Certaines clé (comprise entre ]*nouveau_pair*, *successeur*]) seront prise en charge par le successeur, nous n'aurons donc pas besoin d'envoyer de message. De même pour les clé compris entre ]successeur du nouveau pair, successeur du successeur].
 
-- **suite du TAG_SUCCESSEUR**
+- *suite du TAG_SUCCESSEUR**
 ```py
-def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, nouveau_pair_MPI_rang, TAG_SUCCESSEUR>):
-  envoyer <inverses, TAG_MAJ_INVERSE> à nouveau_pair_id_chord
-  #calcul de la table des fingers du nouveau pair
+def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, 
+                                nouveau_pair_MPI_rang, TAG_SUCCESSEUR>):
+  [...] # cf etape 2
+  # calcul de la table des fingers du nouveau pair
   for j allant de 0 à M :
     clé = (id_chord + 2**j)
     if cle ∈ [successseur_id_chord, nouveau_pair_id_chord[ :
@@ -468,9 +503,32 @@ def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, nouveau_pa
         envoyer <cle, TAG_FINGERS> à next
         reception <responsable_cle, TAG_FINGERS>
         mise à jour de finger[j]
-  #fin du calcul des fingers
+  # fin du calcul des fingers
   envoyer <fingers, TAG_SUCCESSEUR> au nouveau pair
 ```
+- *TAG_FINGERS*
+
+```py
+def reception d’un message TAG_FINGERS (<clé recherchée, TAG_FINGERS>):
+  next = recherche du responsable de cette clé
+  if(next = NIL):
+      successeur est responsable de cette clé
+      envoie de l’identifiant du responsable de la clé à la source 
+          (nous faisons remonter l’information jusqu’au successeur du nouveau pair)
+    else:
+      envoyer <cle, TAG_FINGERS> à next
+      reception <responsable_cle, TAG_FINGERS>
+      envoie de l’identifiant du responsable de la clé à la source 
+          (nous faisons remonter l’information jusqu’au successeur du nouveau pair)
+```
+
+- *TAG_INVERSE*
+```py
+def réception d’un message TAG_INVERSE (<id_chord_inverse, rang_inverse, TAG_INVERSE>):
+  # mise à jour de la table inverse à l'indice rang_inverse avec le contenue du message recu
+  inverse[rang_inverse] = {rang_inverse, id_chord_inverse}
+```
+<div style="page-break-after: always;"></div>
 
 
 #### Étape 4 : Phase de terminaison et affichage
@@ -479,17 +537,51 @@ def réception d’un message TAG_SUCCESSEUR (<nouveau_pair_id_chord, nouveau_pa
 
 &emsp;&emsp;Une fois ses attributs reçu, le nouveau pair signale au simulateur de la terminaison de son insertion. Ce dernier enverra un *TAG_FIN* à tous les pairs de la DHT, et ces dernier sortiront de leurs boucle de réception, et se termineront proprement.
 
-```py
-
-```
 
 ### Justification de la correction de notre algorithme
 
+La justification d’un algorithme se classent en deux catégories : la **sûreté** et la **vivacité**. 
 
+Le protocole *MPI* garantit les canaux d’envoie de message *FIFO* et *fiables*. Nous savons donc que les messages arriveront dans le bon ordre, et qu’aucun ne sera perdu en cours de route.
 
-#### Sureté
+#### Sûreté :
 
-#### Vivacité
+&emsp;&emsp;L'algorithme se compose majoritairement d'une majorité de recherche de clé, que ce soit pour trouver le successeur, mettre à jour les fingers, ou les inverses. La recherche étant sûr, nous n'aurons pas de problème à ce niveau là.
+
+&emsp;&emsp;Une fois trouvé, le successeur du nouveau pair se charge d'envoyer et recevoir une grande majorité des messages nécessaires à l'insertion du nouveau pair, ces envoies sont successifs, et controlés.
+
+&emsp;&emsp;Après l'insertion du nouveau pair, nous pouvons garantir qu'il notifiera tous les pairs présent dans sa table de fingers afin qu'ils mettent à jour leurs table d'inverses. Et nous pouvons aussi garantir qu'après cette mise à jour, le nouveau pair fini par notifier le simulateur entrainant la terminaison des différents pairs de la DHT.
+
+<div style="page-break-after: always;"></div>
+
+#### Vivacité :
+
+**Etape 1** : on assure la recherche d'un successeur (cf Exercice 1)
+
+**Etape 2** : on assure la mise à jour de la table de fingers et d'inverse du nouveau pair, cette dernière étant gérée par son successeur, en recalculant l'ensemble des clés.
+
+**Etape 3** : on assure la mise à jour des inverse des différents pair à l'aide du TAG_INVERSE. Chaque pair met à jour sa table inverse en fonction des messages reçu du nouveau pair.
+
+Concernant les fingers, seul ceux pointant vers le successeur du nouveau pair pourrait être impacter par l'insertion. Or le successeur en question s'occupera de notifier chacun de ses inverses afin qu'ils mettent à jour leurs tables. 
+
+On peut donc garantir que la table des fingers et la table des inverses de tous les pairs de la DHT sont bien à jour.
+
+&emsp;&emsp;A la fin de l'insertion du nouveau pair, la DHT sera dans un état global cohérent avec sa spécification, du fait que pour chaque fingers du nouveau pair, les pairs concerné sont informé. De même pour les inverses du nouveau pair, ces derniers recalculent leurs fingers en fonction du nouveau pair. 
 
 #### Compléxité
 
+&emsp;&emsp;**•** Étape 1 : Recherche du successeur du nouveau pair
+
+Recherche simple, pire cas *log(N)* messages.
+
+&emsp;&emsp;**•** Étape 2 : Mise à jour des inverses du successeur et du nouveau pair
+
+Envoie d'un message à tout les inverses sur successeur, il y a **au plus** *N* messages, cela signifierais que l'enseble de la DHT ai un finger pointant sur ce dernier.
+
+&emsp;&emsp;**•** Étape 3 : Recherche des fingers du nouveau pair et mise à jour des inverses pour ces pairs
+
+Nous lançons la recherche de au plus *M clés*, ce qui fait un total d'au plus *M\*log(N)* messages.
+
+Nous avons donc une complexité en nombre de messages de *N* messages.
+
+</font>
